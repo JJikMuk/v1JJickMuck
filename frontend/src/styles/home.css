@@ -1,0 +1,287 @@
+/* Home Page Styling */
+.home-page {
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+/* Header */
+.header {
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 20px 0;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: 700;
+  color: #4A90E2;
+  letter-spacing: -0.5px;
+}
+
+.nav {
+  display: flex;
+  gap: 40px;
+}
+
+.nav-link {
+  color: #333;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #4A90E2;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.user-name {
+  font-size: 14px;
+  color: #666;
+  margin-right: 8px;
+}
+
+.btn-login {
+  background: transparent;
+  border: none;
+  color: #333;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 16px;
+}
+
+.btn-profile {
+  background: white;
+  color: #4A90E2;
+  border: 2px solid #4A90E2;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-profile:hover {
+  background: #4A90E2;
+  color: white;
+}
+
+.btn-signup,
+.btn-logout {
+  background: #4A90E2;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-signup:hover,
+.btn-logout:hover {
+  background: #357ABD;
+}
+
+/* Hero Section */
+.hero-section {
+  padding: 80px 0;
+}
+
+.hero-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.hero-content {
+  flex: 1;
+}
+
+.hero-badge {
+  color: #4A90E2;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+}
+
+.hero-title {
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1a1a1a;
+  margin: 0 0 24px;
+}
+
+.hero-description {
+  font-size: 18px;
+  line-height: 1.6;
+  color: #666;
+  margin-bottom: 40px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  background: #4A90E2;
+  color: white;
+  padding: 16px 32px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  display: inline-block;
+}
+
+.btn-primary:hover {
+  background: #357ABD;
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: white;
+  color: #333;
+  padding: 16px 32px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 2px solid #e0e0e0;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: #4A90E2;
+  transform: translateY(-2px);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hero-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.image-placeholder {
+  width: 100%;
+  max-width: 500px;
+  aspect-ratio: 1;
+  background: #ffffff;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.placeholder-content {
+  text-align: center;
+  color: #999;
+}
+
+.placeholder-content span {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.placeholder-content p {
+  font-size: 16px;
+  margin: 0;
+}
+
+.result-box {
+  margin-top: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+}
+
+.result-box h3 {
+  margin: 0 0 12px;
+  color: #333;
+}
+
+.result-box pre {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  overflow-x: auto;
+}
+
+/* Trusted Section */
+.trusted-section {
+  padding: 60px 0;
+  text-align: center;
+}
+
+.trusted-text {
+  font-size: 16px;
+  color: #666;
+  margin: 0 0 40px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .hero-title {
+    font-size: 40px;
+  }
+
+  .nav {
+    display: none;
+  }
+
+  .header-container {
+    padding: 0 20px;
+  }
+
+  .hero-section {
+    padding: 40px 0;
+  }
+
+  .hero-container {
+    padding: 0 20px;
+  }
+}

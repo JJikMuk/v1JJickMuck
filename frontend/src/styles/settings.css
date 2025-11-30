@@ -1,0 +1,212 @@
+/* Settings Page Styling */
+.settings-page {
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding: 40px 20px;
+}
+
+.settings-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.settings-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.settings-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 12px;
+}
+
+.settings-header p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+.settings-section {
+  margin-bottom: 40px;
+}
+
+.settings-section h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px;
+}
+
+.section-description {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 16px;
+}
+
+/* Diet Type Grid */
+.diet-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.diet-type-option {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.diet-type-option:hover {
+  border-color: #4A90E2;
+  background: #f0f7ff;
+}
+
+.diet-type-option input[type="radio"] {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4A90E2;
+}
+
+.diet-type-option input[type="radio"]:checked ~ span {
+  font-weight: 600;
+  color: #4A90E2;
+}
+
+.diet-type-option span {
+  font-size: 15px;
+  color: #333;
+}
+
+/* Allergy Grid */
+.allergy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.allergy-option {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.allergy-option:hover {
+  border-color: #4A90E2;
+  background: #f0f7ff;
+}
+
+.allergy-option input[type="checkbox"] {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4A90E2;
+}
+
+.allergy-option input[type="checkbox"]:checked ~ span {
+  font-weight: 600;
+  color: #4A90E2;
+}
+
+.allergy-option span {
+  font-size: 15px;
+  color: #333;
+}
+
+/* Actions */
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.btn-save {
+  background: #4A90E2;
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #357ABD;
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-skip {
+  background: white;
+  color: #666;
+  border: 2px solid #e0e0e0;
+  padding: 14px 32px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-skip:hover {
+  border-color: #4A90E2;
+  color: #4A90E2;
+}
+
+/* Loading */
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 18px;
+  color: #666;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 24px;
+  }
+
+  .settings-header h1 {
+    font-size: 24px;
+  }
+
+  .diet-type-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .allergy-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .settings-actions {
+    flex-direction: column;
+  }
+
+  .btn-save,
+  .btn-skip {
+    width: 100%;
+  }
+}
