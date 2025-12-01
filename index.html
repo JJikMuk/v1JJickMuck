@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>OCR 테스트</title>
+</head>
+<body>
+
+<h2>Nutrition & Material OCR</h2>
+
+<input type="file" id="fileInput" accept="image/*"/>
+<button onclick="uploadImage()">업로드 & 분석</button>
+
+<h3>결과</h3>
+<pre id="resultBox"></pre>
+
+<script>
+async function uploadImage() {
+    const fileInput = document.getElementById("fileInput");
+
+    if (fileInput.files.length === 0) {
+        alert("이미지를 선택해주세요!");
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const response = await fetch("http://localhost:8000/ocr", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+
+        document.getElementById("resultBox").textContent =
+            JSON.stringify(data, null, 4);
+
+    } catch (error) {
+        console.error("에러 발생:", error);
+        alert("서버와 통신 중 문제가 발생했습니다.");
+    }
+}
+</script>
+
+</body>
+</html>
