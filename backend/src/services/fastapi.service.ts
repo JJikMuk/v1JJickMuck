@@ -5,13 +5,14 @@ class FastAPIService {
     private static FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
 
     /**
-     * FastAPI로 이미지 전송
+     * FastAPI로 이미지 전송 (OCR + RAG 분석)
      * @param imageBuffer 이미지 버퍼
      * @param filename 파일명
      * @param mimetype MIME 타입
      * @param userProfile 사용자 프로필 정보
+     * @param userId 사용자 ID (RAG 분석용)
      */
-    static async uploadImage(imageBuffer: Buffer, filename: string, mimetype: string, userProfile: any) {
+    static async uploadImage(imageBuffer: Buffer, filename: string, mimetype: string, userProfile: any, userId?: string) {
         try {
             // FormData 생성
             const formData = new FormData();
@@ -20,10 +21,18 @@ class FastAPIService {
                 contentType: mimetype,
             });
 
-            // 사용자 정보를 JSON으로 추가
+            // 사용자 정보를 JSON으로 추가 (RAG에 필요한 추가 정보 포함)
             const userInfo = {
+                user_id: userId || userProfile.uuid || "anonymous",
                 diet_type: userProfile.diet_type || "none",
-                allergies: userProfile.allergies?.map((a: any) => a.display_name) || []
+                allergies: userProfile.allergies?.map((a: any) => a.display_name) || [],
+                // RAG 분석을 위한 추가 정보
+                height: userProfile.height || null,
+                weight: userProfile.weight || null,
+                age_range: userProfile.age_range || "20대",
+                gender: userProfile.gender || null,
+                diseases: userProfile.diseases || [],
+                special_conditions: userProfile.special_conditions || []
             };
             formData.append("user_info", JSON.stringify(userInfo));
 
@@ -33,6 +42,7 @@ class FastAPIService {
                 formData,
                 {
                     headers: formData.getHeaders(),
+                    timeout: 60000  // 60초 타임아웃 (RAG + GPT 처리 시간 고려)
                 }
             );
 

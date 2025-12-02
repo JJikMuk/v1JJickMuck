@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
     
+    # Gemini API (선택사항 - 기존 호환성을 위해)
+    gemini_api_key: str = ""
+    
     @property
     def database_url(self) -> str:
         """동기 DB URL"""

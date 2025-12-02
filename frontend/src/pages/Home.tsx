@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import { userService } from '../services/user.service';
 
 interface HomeProps {
@@ -10,8 +12,47 @@ interface HomeProps {
 
 export default function Home({ isAuthenticated, userName, onLogout }: HomeProps) {
   const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  const handleStart = async () => {
+  // 이미지 슬라이더 데이터
+  const slides = [
+    {
+      icon: '🍽️',
+      title: '안전한 식사를 위한 첫걸음 시작하기',
+      bgColor: '#E3F2FD',
+      action: 'start'
+    },
+    {
+      icon: '🏢',
+      title: '여러 후원사들과 함께합니다',
+      bgColor: '#F1F8E9',
+      action: 'sponsors'
+    }
+  ];
+
+  // 자동 슬라이드
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 3000); // 3초마다 전환
+
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  const scrollToSponsors = () => {
+    const sponsorsSection = document.querySelector('.sponsors-section');
+    if (sponsorsSection) {
+      sponsorsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleSlideClick = async (action: string) => {
+    if (action === 'sponsors') {
+      scrollToSponsors();
+      return;
+    }
+
+    // 'start' action
     // 로그인하지 않은 경우 로그인 페이지로
     if (!isAuthenticated) {
       navigate('/login');
@@ -39,6 +80,8 @@ export default function Home({ isAuthenticated, userName, onLogout }: HomeProps)
       navigate('/settings');
     }
   };
+
+  const handleStart = () => handleSlideClick('start');
 
   return (
     <div className="home-page">
@@ -77,10 +120,33 @@ export default function Home({ isAuthenticated, userName, onLogout }: HomeProps)
           </div>
 
           <div className="hero-image">
-            <div className="image-placeholder">
-              <div className="placeholder-content">
-                <span>🍽️</span>
-                <p>안전한 식사를 위한 첫걸음</p>
+            <div className="image-slider">
+              <div className="slider-container">
+                {slides.map((slide, index) => (
+                  <div
+                    key={index}
+                    className={`slide ${index === currentSlide ? 'active' : ''}`}
+                    style={{ backgroundColor: slide.bgColor }}
+                    onClick={() => handleSlideClick(slide.action)}
+                  >
+                    <div className="slide-content">
+                      <span className="slide-icon">{slide.icon}</span>
+                      <p className="slide-title">{slide.title}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* 인디케이터 */}
+              <div className="slider-indicators">
+                {slides.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`indicator ${index === currentSlide ? 'active' : ''}`}
+                    onClick={() => setCurrentSlide(index)}
+                    aria-label={`슬라이드 ${index + 1}`}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -88,10 +154,16 @@ export default function Home({ isAuthenticated, userName, onLogout }: HomeProps)
       </main>
 
       <section className="trusted-section">
-        <p className="trusted-text">
-          안전한 식생활을 위한 필수 서비스
-        </p>
+        <button className="scroll-down-button" onClick={scrollToSponsors} aria-label="스크롤 다운">
+          <div className="scroll-arrow">
+            <span>⌄</span>
+            <span>⌄</span>
+            <span>⌄</span>
+          </div>
+        </button>
       </section>
+
+      <Footer />
     </div>
   );
 }

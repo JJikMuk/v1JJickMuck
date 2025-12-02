@@ -563,3 +563,23 @@ class RAGService:
 
 # 싱글톤 인스턴스
 rag_service = RAGService()
+
+
+# 모듈 레벨 헬퍼 함수들 (gpt_service에서 사용)
+def calculate_bmi(weight: float, height: float) -> float:
+    """BMI 계산"""
+    if not weight or not height or height <= 0:
+        return 0.0
+    height_m = height / 100
+    return round(weight / (height_m ** 2), 1)
+
+
+def get_personalized_recommendations(user_profile: Dict[str, Any]) -> Dict[str, Any]:
+    """개인화된 권장사항 반환"""
+    return rag_service.calculate_personalized_limits(
+        weight=user_profile.get("weight", 70),
+        height=user_profile.get("height", 170),
+        age_range=user_profile.get("age_range", "20대"),
+        gender=user_profile.get("gender", "male"),
+        special_conditions=user_profile.get("special_conditions", [])
+    )

@@ -6,7 +6,7 @@ import UsersModel from "../models/user.model";
 
 class ImageController {
     /**
-     * 이미지 업로드 - FastAPI로 전달
+     * 이미지 업로드 - FastAPI로 전달 (OCR + RAG 분석)
      */
     static async uploadImage(req: Request, res: Response) {
         try {
@@ -39,12 +39,13 @@ class ImageController {
                 });
             }
 
-            // FastAPI로 이미지와 사용자 정보 전송
+            // FastAPI로 이미지와 사용자 정보 전송 (OCR + RAG 분석)
             const fastapiResponse = await FastAPIService.uploadImage(
                 buffer,
                 originalname,
                 mimetype,
-                userProfile
+                userProfile,
+                user.uuid  // userId 추가
             );
 
             // 스캔 히스토리 저장
