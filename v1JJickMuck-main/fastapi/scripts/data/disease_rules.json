@@ -1,0 +1,143 @@
+{
+  "disease_rules": [
+    {
+      "rule_type": "disease",
+      "condition_key": "당뇨",
+      "condition_aliases": ["당뇨병", "diabetes", "혈당", "제2형당뇨"],
+      "nutrient_limits": {
+        "sugar": {"max": 10, "unit": "g", "per_serving": true},
+        "carbohydrates": {"max": 45, "unit": "g", "per_serving": true}
+      },
+      "warning_message": "⚠️ 당뇨병 환자분께: 이 제품의 당류/탄수화물 함량이 높습니다. 혈당 수치에 영향을 줄 수 있으니 섭취량을 조절하세요.",
+      "severity": "warning",
+      "score_impact": -30,
+      "description": "당뇨병 환자는 혈당 관리를 위해 당류와 탄수화물 섭취를 제한해야 합니다."
+    },
+    {
+      "rule_type": "disease",
+      "condition_key": "고혈압",
+      "condition_aliases": ["hypertension", "혈압", "고혈압증"],
+      "nutrient_limits": {
+        "sodium": {"max": 400, "unit": "mg", "per_serving": true}
+      },
+      "warning_message": "⚠️ 고혈압 환자분께: 이 제품의 나트륨 함량이 높습니다. 혈압 관리를 위해 저염 제품을 고려해주세요.",
+      "severity": "warning",
+      "score_impact": -25,
+      "description": "고혈압 환자는 나트륨 섭취를 하루 2000mg 이하로 제한해야 합니다."
+    },
+    {
+      "rule_type": "disease",
+      "condition_key": "고지혈증",
+      "condition_aliases": ["이상지질혈증", "hyperlipidemia", "콜레스테롤"],
+      "nutrient_limits": {
+        "saturated_fat": {"max": 5, "unit": "g", "per_serving": true},
+        "trans_fat": {"max": 0.5, "unit": "g", "per_serving": true},
+        "cholesterol": {"max": 60, "unit": "mg", "per_serving": true}
+      },
+      "warning_message": "⚠️ 고지혈증 환자분께: 이 제품의 포화지방/콜레스테롤 함량이 높습니다. 심혈관 건강을 위해 섭취를 제한하세요.",
+      "severity": "warning",
+      "score_impact": -25,
+      "description": "고지혈증 환자는 포화지방, 트랜스지방, 콜레스테롤 섭취를 제한해야 합니다."
+    },
+    {
+      "rule_type": "disease",
+      "condition_key": "신장질환",
+      "condition_aliases": ["신부전", "만성신장병", "CKD", "kidney disease", "투석"],
+      "nutrient_limits": {
+        "sodium": {"max": 300, "unit": "mg", "per_serving": true},
+        "protein": {"max": 15, "unit": "g", "per_serving": true},
+        "potassium": {"max": 200, "unit": "mg", "per_serving": true},
+        "phosphorus": {"max": 150, "unit": "mg", "per_serving": true}
+      },
+      "warning_message": "⚠️ 신장질환 환자분께: 나트륨, 단백질, 칼륨, 인 함량을 확인하세요. 의사와 상담 후 섭취하시기 바랍니다.",
+      "severity": "warning",
+      "score_impact": -35,
+      "description": "신장질환 환자는 전해질과 단백질 섭취를 엄격히 제한해야 합니다."
+    },
+    {
+      "rule_type": "disease",
+      "condition_key": "통풍",
+      "condition_aliases": ["gout", "요산", "고요산혈증"],
+      "nutrient_limits": {
+        "purine": {"max": 100, "unit": "mg", "per_serving": true}
+      },
+      "forbidden_ingredients": ["내장", "간", "곱창", "멸치", "정어리", "고등어", "맥주"],
+      "warning_message": "⚠️ 통풍 환자분께: 이 제품에 퓨린 함량이 높은 재료가 포함되어 있을 수 있습니다. 요산 수치 관리에 주의하세요.",
+      "severity": "warning",
+      "score_impact": -25,
+      "description": "통풍 환자는 퓨린이 높은 음식(내장, 등푸른 생선 등)을 피해야 합니다."
+    },
+    {
+      "rule_type": "disease",
+      "condition_key": "심장질환",
+      "condition_aliases": ["심혈관질환", "심장병", "heart disease", "관상동맥"],
+      "nutrient_limits": {
+        "sodium": {"max": 400, "unit": "mg", "per_serving": true},
+        "saturated_fat": {"max": 4, "unit": "g", "per_serving": true},
+        "trans_fat": {"max": 0, "unit": "g", "per_serving": true}
+      },
+      "warning_message": "⚠️ 심장질환 환자분께: 나트륨과 포화지방 함량이 높습니다. 심장 건강을 위해 섭취량을 조절하세요.",
+      "severity": "warning",
+      "score_impact": -30,
+      "description": "심장질환 환자는 나트륨과 불량 지방 섭취를 제한해야 합니다."
+    },
+    {
+      "rule_type": "disease",
+      "condition_key": "비만",
+      "condition_aliases": ["obesity", "과체중", "체중관리", "다이어트"],
+      "nutrient_limits": {
+        "calories": {"max": 300, "unit": "kcal", "per_serving": true},
+        "fat": {"max": 10, "unit": "g", "per_serving": true},
+        "sugar": {"max": 10, "unit": "g", "per_serving": true}
+      },
+      "warning_message": "ℹ️ 체중 관리 중이신 분께: 이 제품은 칼로리/지방 함량이 높은 편입니다. 섭취량을 조절하세요.",
+      "severity": "info",
+      "score_impact": -15,
+      "description": "비만 관리 중인 분은 칼로리, 지방, 당류 섭취를 줄여야 합니다."
+    },
+    {
+      "rule_type": "disease",
+      "condition_key": "간질환",
+      "condition_aliases": ["간경화", "지방간", "간염", "liver disease"],
+      "nutrient_limits": {
+        "sodium": {"max": 400, "unit": "mg", "per_serving": true},
+        "fat": {"max": 8, "unit": "g", "per_serving": true}
+      },
+      "warning_message": "⚠️ 간질환 환자분께: 나트륨과 지방 함량을 확인하세요. 간 건강을 위해 섭취에 주의가 필요합니다.",
+      "severity": "warning",
+      "score_impact": -25,
+      "description": "간질환 환자는 나트륨과 지방 섭취를 제한하고 알코올을 피해야 합니다."
+    },
+    {
+      "rule_type": "disease",
+      "condition_key": "골다공증",
+      "condition_aliases": ["osteoporosis", "뼈 건강", "골밀도"],
+      "nutrient_limits": {
+        "sodium": {"max": 500, "unit": "mg", "per_serving": true},
+        "caffeine": {"max": 100, "unit": "mg", "per_serving": true}
+      },
+      "beneficial_nutrients": {
+        "calcium": {"min": 100, "unit": "mg"},
+        "vitamin_d": {"min": 2, "unit": "ug"}
+      },
+      "warning_message": "ℹ️ 골다공증 환자분께: 나트륨 과다 섭취는 칼슘 배출을 증가시킵니다. 칼슘과 비타민D가 충분한지 확인하세요.",
+      "severity": "info",
+      "score_impact": -10,
+      "description": "골다공증 환자는 칼슘과 비타민D를 충분히 섭취하고 나트륨을 제한해야 합니다."
+    },
+    {
+      "rule_type": "disease",
+      "condition_key": "빈혈",
+      "condition_aliases": ["anemia", "철분결핍", "철결핍성빈혈"],
+      "beneficial_nutrients": {
+        "iron": {"min": 2, "unit": "mg"},
+        "vitamin_c": {"min": 10, "unit": "mg"},
+        "vitamin_b12": {"min": 0.5, "unit": "ug"}
+      },
+      "warning_message": "ℹ️ 빈혈 환자분께: 철분, 비타민C, 비타민B12가 풍부한 식품을 선택하세요.",
+      "severity": "info",
+      "score_impact": 0,
+      "description": "빈혈 환자는 철분과 조혈에 필요한 비타민 섭취가 중요합니다."
+    }
+  ]
+}

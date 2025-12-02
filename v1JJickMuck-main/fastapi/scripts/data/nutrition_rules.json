@@ -1,0 +1,119 @@
+{
+  "nutrition_rules": [
+    {
+      "rule_type": "nutrition",
+      "condition_key": "나트륨_과다",
+      "target": "general",
+      "nutrient_limits": {
+        "sodium": {"max": 600, "unit": "mg", "per_serving": true}
+      },
+      "daily_reference": {
+        "sodium": 2000
+      },
+      "warning_message": "ℹ️ 이 제품은 나트륨 함량이 높습니다 (1일 권장량의 30% 이상). 하루 전체 나트륨 섭취량을 고려해주세요.",
+      "severity": "info",
+      "score_impact": -10,
+      "description": "WHO 권장 일일 나트륨 섭취량은 2000mg 이하입니다."
+    },
+    {
+      "rule_type": "nutrition",
+      "condition_key": "당류_과다",
+      "target": "general",
+      "nutrient_limits": {
+        "sugar": {"max": 12, "unit": "g", "per_serving": true}
+      },
+      "daily_reference": {
+        "sugar": 25
+      },
+      "warning_message": "ℹ️ 이 제품은 당류 함량이 높습니다. WHO 권장 일일 당류 섭취량(25g)의 절반에 해당합니다.",
+      "severity": "info",
+      "score_impact": -10,
+      "description": "과도한 당류 섭취는 비만, 당뇨병, 심혈관 질환 위험을 높입니다."
+    },
+    {
+      "rule_type": "nutrition",
+      "condition_key": "포화지방_과다",
+      "target": "general",
+      "nutrient_limits": {
+        "saturated_fat": {"max": 5, "unit": "g", "per_serving": true}
+      },
+      "daily_reference": {
+        "saturated_fat": 15
+      },
+      "warning_message": "ℹ️ 이 제품은 포화지방 함량이 높습니다. 심혈관 건강을 위해 섭취량에 주의하세요.",
+      "severity": "info",
+      "score_impact": -10,
+      "description": "포화지방은 일일 열량의 10% 미만으로 섭취해야 합니다."
+    },
+    {
+      "rule_type": "nutrition",
+      "condition_key": "트랜스지방_함유",
+      "target": "general",
+      "nutrient_limits": {
+        "trans_fat": {"max": 0.5, "unit": "g", "per_serving": true}
+      },
+      "warning_message": "⚠️ 이 제품에는 트랜스지방이 포함되어 있습니다. 트랜스지방은 심혈관 질환 위험을 높이므로 섭취를 피하세요.",
+      "severity": "warning",
+      "score_impact": -20,
+      "description": "트랜스지방은 가능한 섭취하지 않는 것이 좋습니다."
+    },
+    {
+      "rule_type": "nutrition",
+      "condition_key": "고칼로리",
+      "target": "general",
+      "nutrient_limits": {
+        "calories": {"max": 500, "unit": "kcal", "per_serving": true}
+      },
+      "daily_reference": {
+        "calories": 2000
+      },
+      "warning_message": "ℹ️ 이 제품은 1회 제공량 기준 고칼로리 식품입니다. 하루 열량 섭취에 주의하세요.",
+      "severity": "info",
+      "score_impact": -5,
+      "description": "성인 기준 하루 권장 열량은 약 2000kcal입니다."
+    },
+    {
+      "rule_type": "nutrition",
+      "condition_key": "콜레스테롤_과다",
+      "target": "general",
+      "nutrient_limits": {
+        "cholesterol": {"max": 100, "unit": "mg", "per_serving": true}
+      },
+      "daily_reference": {
+        "cholesterol": 300
+      },
+      "warning_message": "ℹ️ 이 제품은 콜레스테롤 함량이 높습니다. 심혈관 건강을 위해 일일 섭취량을 확인하세요.",
+      "severity": "info",
+      "score_impact": -10,
+      "description": "콜레스테롤은 하루 300mg 이하로 섭취하는 것이 좋습니다."
+    },
+    {
+      "rule_type": "nutrition",
+      "condition_key": "식이섬유_부족",
+      "target": "general",
+      "nutrient_limits": {
+        "fiber": {"min": 2, "unit": "g", "per_serving": true}
+      },
+      "beneficial": true,
+      "warning_message": "ℹ️ 이 제품은 식이섬유 함량이 낮습니다. 다른 식품에서 식이섬유를 보충하세요.",
+      "severity": "info",
+      "score_impact": -5,
+      "description": "성인은 하루 25-30g의 식이섬유를 섭취해야 합니다."
+    },
+    {
+      "rule_type": "nutrition",
+      "condition_key": "카페인_함유",
+      "target": "general",
+      "nutrient_limits": {
+        "caffeine": {"max": 100, "unit": "mg", "per_serving": true}
+      },
+      "daily_reference": {
+        "caffeine": 400
+      },
+      "warning_message": "ℹ️ 이 제품에는 카페인이 포함되어 있습니다. 임산부, 어린이, 카페인 민감자는 주의하세요.",
+      "severity": "info",
+      "score_impact": -5,
+      "description": "성인 기준 카페인 일일 권장량은 400mg 이하입니다."
+    }
+  ]
+}
