@@ -1,0 +1,112 @@
+{
+  "allergy_rules": [
+    {
+      "rule_type": "allergy",
+      "condition_key": "땅콩",
+      "allergen_keywords": ["땅콩", "피넛", "peanut", "땅콩버터", "땅콩오일"],
+      "warning_message": "⚠️ 이 제품에는 땅콩 성분이 포함되어 있습니다. 땅콩 알레르기가 있는 분은 섭취를 피해주세요.",
+      "severity": "danger",
+      "score_impact": -50,
+      "description": "땅콩 알레르기는 심각한 아나필락시스를 유발할 수 있는 위험한 알레르기입니다."
+    },
+    {
+      "rule_type": "allergy",
+      "condition_key": "우유",
+      "allergen_keywords": ["우유", "유제품", "milk", "유당", "카제인", "유청", "버터", "치즈", "크림", "lactose"],
+      "warning_message": "⚠️ 이 제품에는 유제품 성분이 포함되어 있습니다. 유제품 알레르기가 있는 분은 섭취를 피해주세요.",
+      "severity": "danger",
+      "score_impact": -50,
+      "description": "우유 알레르기는 카제인과 유청 단백질에 대한 면역 반응입니다."
+    },
+    {
+      "rule_type": "allergy",
+      "condition_key": "계란",
+      "allergen_keywords": ["계란", "달걀", "egg", "난백", "난황", "알부민", "마요네즈", "레시틴"],
+      "warning_message": "⚠️ 이 제품에는 계란 성분이 포함되어 있습니다. 계란 알레르기가 있는 분은 섭취를 피해주세요.",
+      "severity": "danger",
+      "score_impact": -50,
+      "description": "계란 알레르기는 주로 난백 단백질에 반응합니다."
+    },
+    {
+      "rule_type": "allergy",
+      "condition_key": "밀",
+      "allergen_keywords": ["밀", "밀가루", "글루텐", "wheat", "gluten", "소맥", "강력분", "박력분", "중력분"],
+      "warning_message": "⚠️ 이 제품에는 밀(글루텐) 성분이 포함되어 있습니다. 밀 알레르기나 셀리악병이 있는 분은 섭취를 피해주세요.",
+      "severity": "danger",
+      "score_impact": -50,
+      "description": "밀 알레르기와 셀리악병은 글루텐에 대한 면역 반응입니다."
+    },
+    {
+      "rule_type": "allergy",
+      "condition_key": "대두",
+      "allergen_keywords": ["대두", "콩", "soy", "두부", "된장", "간장", "두유", "콩기름"],
+      "warning_message": "⚠️ 이 제품에는 대두 성분이 포함되어 있습니다. 대두 알레르기가 있는 분은 섭취를 피해주세요.",
+      "severity": "danger",
+      "score_impact": -50,
+      "description": "대두 알레르기는 콩 단백질에 대한 면역 반응입니다."
+    },
+    {
+      "rule_type": "allergy",
+      "condition_key": "갑각류",
+      "allergen_keywords": ["새우", "게", "랍스터", "가재", "크랩", "shrimp", "crab", "갑각류"],
+      "warning_message": "⚠️ 이 제품에는 갑각류 성분이 포함되어 있습니다. 갑각류 알레르기가 있는 분은 섭취를 피해주세요.",
+      "severity": "danger",
+      "score_impact": -50,
+      "description": "갑각류 알레르기는 트로포미오신 단백질에 대한 반응입니다."
+    },
+    {
+      "rule_type": "allergy",
+      "condition_key": "조개류",
+      "allergen_keywords": ["조개", "굴", "홍합", "전복", "오징어", "문어", "oyster", "mussel", "연체류"],
+      "warning_message": "⚠️ 이 제품에는 조개류/연체류 성분이 포함되어 있습니다. 조개류 알레르기가 있는 분은 섭취를 피해주세요.",
+      "severity": "danger",
+      "score_impact": -45,
+      "description": "조개류 알레르기는 연체류에 대한 면역 반응입니다."
+    },
+    {
+      "rule_type": "allergy",
+      "condition_key": "생선",
+      "allergen_keywords": ["생선", "어류", "fish", "고등어", "참치", "연어", "멸치", "어묵"],
+      "warning_message": "⚠️ 이 제품에는 생선 성분이 포함되어 있습니다. 생선 알레르기가 있는 분은 섭취를 피해주세요.",
+      "severity": "danger",
+      "score_impact": -45,
+      "description": "생선 알레르기는 파발부민 단백질에 대한 반응입니다."
+    },
+    {
+      "rule_type": "allergy",
+      "condition_key": "견과류",
+      "allergen_keywords": ["호두", "아몬드", "캐슈넛", "피스타치오", "마카다미아", "잣", "헤이즐넛", "견과", "tree nut"],
+      "warning_message": "⚠️ 이 제품에는 견과류 성분이 포함되어 있습니다. 견과류 알레르기가 있는 분은 섭취를 피해주세요.",
+      "severity": "danger",
+      "score_impact": -50,
+      "description": "견과류 알레르기는 땅콩 알레르기와 함께 심각한 반응을 일으킬 수 있습니다."
+    },
+    {
+      "rule_type": "allergy",
+      "condition_key": "메밀",
+      "allergen_keywords": ["메밀", "buckwheat", "소바"],
+      "warning_message": "⚠️ 이 제품에는 메밀 성분이 포함되어 있습니다. 메밀 알레르기가 있는 분은 섭취를 피해주세요.",
+      "severity": "danger",
+      "score_impact": -50,
+      "description": "메밀 알레르기는 심한 경우 아나필락시스를 유발할 수 있습니다."
+    },
+    {
+      "rule_type": "allergy",
+      "condition_key": "아황산류",
+      "allergen_keywords": ["아황산", "아황산나트륨", "이산화황", "sulfite", "메타중아황산"],
+      "warning_message": "⚠️ 이 제품에는 아황산류가 포함되어 있습니다. 아황산 과민증이 있는 분은 주의하세요.",
+      "severity": "warning",
+      "score_impact": -30,
+      "description": "아황산류는 천식 환자에게 호흡 곤란을 유발할 수 있습니다."
+    },
+    {
+      "rule_type": "allergy",
+      "condition_key": "복숭아",
+      "allergen_keywords": ["복숭아", "peach", "자두", "살구", "체리", "사과"],
+      "warning_message": "⚠️ 이 제품에는 복숭아류 과일 성분이 포함되어 있습니다. 복숭아 알레르기가 있는 분은 섭취를 피해주세요.",
+      "severity": "danger",
+      "score_impact": -45,
+      "description": "복숭아 알레르기는 장미과 과일 전반에 교차 반응을 일으킬 수 있습니다."
+    }
+  ]
+}

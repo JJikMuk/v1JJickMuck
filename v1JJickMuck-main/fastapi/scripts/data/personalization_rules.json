@@ -1,0 +1,187 @@
+{
+  "personalization_rules": {
+    "age_groups": {
+      "10대": {
+        "description": "청소년기 (10-19세)",
+        "daily_calories": {"male": 2700, "female": 2000},
+        "nutrient_adjustments": {
+          "calcium": {"multiplier": 1.3, "reason": "골격 성장기"},
+          "protein": {"multiplier": 1.2, "reason": "성장기 단백질 필요"},
+          "iron": {"multiplier": 1.2, "reason": "급격한 성장"}
+        },
+        "warnings": ["카페인 섭취 제한 권장", "가공식품 과다 섭취 주의"]
+      },
+      "20대": {
+        "description": "청년기 (20-29세)",
+        "daily_calories": {"male": 2600, "female": 2000},
+        "nutrient_adjustments": {},
+        "warnings": []
+      },
+      "30대": {
+        "description": "장년기 초기 (30-39세)",
+        "daily_calories": {"male": 2500, "female": 1900},
+        "nutrient_adjustments": {
+          "fiber": {"multiplier": 1.1, "reason": "대사 저하 대비"}
+        },
+        "warnings": ["나트륨 섭취 관리 시작 권장"]
+      },
+      "40대": {
+        "description": "장년기 (40-49세)",
+        "daily_calories": {"male": 2400, "female": 1800},
+        "nutrient_adjustments": {
+          "calcium": {"multiplier": 1.1, "reason": "골밀도 유지"},
+          "sodium": {"multiplier": 0.9, "reason": "혈압 관리"}
+        },
+        "warnings": ["심혈관 건강 주의", "정기 건강검진 권장"]
+      },
+      "50대": {
+        "description": "중년기 (50-59세)",
+        "daily_calories": {"male": 2200, "female": 1700},
+        "nutrient_adjustments": {
+          "calcium": {"multiplier": 1.2, "reason": "골다공증 예방"},
+          "sodium": {"multiplier": 0.8, "reason": "혈압 관리 강화"},
+          "sugar": {"multiplier": 0.8, "reason": "당뇨 예방"}
+        },
+        "warnings": ["만성질환 주의", "저염식 권장"]
+      },
+      "60대": {
+        "description": "노년기 초기 (60-69세)",
+        "daily_calories": {"male": 2000, "female": 1600},
+        "nutrient_adjustments": {
+          "protein": {"multiplier": 1.1, "reason": "근감소 예방"},
+          "calcium": {"multiplier": 1.3, "reason": "골다공증 예방"},
+          "sodium": {"multiplier": 0.7, "reason": "혈압 관리"}
+        },
+        "warnings": ["소화 기능 저하 고려", "단백질 충분히 섭취"]
+      },
+      "70대이상": {
+        "description": "노년기 (70세 이상)",
+        "daily_calories": {"male": 1900, "female": 1500},
+        "nutrient_adjustments": {
+          "protein": {"multiplier": 1.2, "reason": "근감소증 예방"},
+          "calcium": {"multiplier": 1.3, "reason": "골절 예방"},
+          "sodium": {"multiplier": 0.6, "reason": "심혈관 보호"}
+        },
+        "warnings": ["연하 곤란 가능성", "소화 용이한 식품 권장"]
+      }
+    },
+    "gender_adjustments": {
+      "male": {
+        "base_calories": 2500,
+        "iron": {"daily_mg": 10},
+        "protein": {"per_kg": 1.0}
+      },
+      "female": {
+        "base_calories": 2000,
+        "iron": {"daily_mg": 14, "reason": "월경으로 인한 철분 손실"},
+        "protein": {"per_kg": 0.9},
+        "calcium": {"multiplier": 1.1, "reason": "골다공증 예방"}
+      }
+    },
+    "bmi_categories": {
+      "underweight": {
+        "range": [0, 18.5],
+        "label": "저체중",
+        "calorie_adjustment": 1.15,
+        "advice": "충분한 열량과 단백질 섭취가 필요합니다.",
+        "score_bonus": 0
+      },
+      "normal": {
+        "range": [18.5, 23],
+        "label": "정상",
+        "calorie_adjustment": 1.0,
+        "advice": "현재 체중을 유지하세요.",
+        "score_bonus": 5
+      },
+      "overweight": {
+        "range": [23, 25],
+        "label": "과체중",
+        "calorie_adjustment": 0.9,
+        "advice": "칼로리 섭취를 조금 줄이는 것이 좋습니다.",
+        "score_bonus": 0,
+        "nutrient_limits": {
+          "calories": {"max_multiplier": 0.9},
+          "fat": {"max_multiplier": 0.85},
+          "sugar": {"max_multiplier": 0.8}
+        }
+      },
+      "obese_1": {
+        "range": [25, 30],
+        "label": "비만 1단계",
+        "calorie_adjustment": 0.8,
+        "advice": "체중 감량이 권장됩니다. 칼로리와 지방 섭취를 줄이세요.",
+        "score_bonus": -5,
+        "nutrient_limits": {
+          "calories": {"max_multiplier": 0.8},
+          "fat": {"max_multiplier": 0.7},
+          "sugar": {"max_multiplier": 0.6},
+          "sodium": {"max_multiplier": 0.9}
+        }
+      },
+      "obese_2": {
+        "range": [30, 100],
+        "label": "비만 2단계 이상",
+        "calorie_adjustment": 0.7,
+        "advice": "적극적인 체중 관리가 필요합니다. 의사와 상담하세요.",
+        "score_bonus": -10,
+        "nutrient_limits": {
+          "calories": {"max_multiplier": 0.7},
+          "fat": {"max_multiplier": 0.6},
+          "sugar": {"max_multiplier": 0.5},
+          "sodium": {"max_multiplier": 0.8}
+        }
+      }
+    },
+    "special_conditions": {
+      "임산부": {
+        "nutrient_adjustments": {
+          "calories": {"add": 340, "reason": "2분기 이후"},
+          "protein": {"multiplier": 1.3},
+          "iron": {"multiplier": 1.5},
+          "folate": {"multiplier": 1.5},
+          "calcium": {"multiplier": 1.2}
+        },
+        "forbidden": ["알코올", "카페인 과다", "생선회", "날고기"],
+        "warnings": ["리스테리아균 주의", "수은 함유 생선 제한"],
+        "score_impact": -30
+      },
+      "수유부": {
+        "nutrient_adjustments": {
+          "calories": {"add": 500},
+          "protein": {"multiplier": 1.3},
+          "calcium": {"multiplier": 1.3},
+          "vitamin_a": {"multiplier": 1.5}
+        },
+        "forbidden": ["알코올", "카페인 과다"],
+        "warnings": ["수분 충분히 섭취"],
+        "score_impact": -20
+      },
+      "채식주의": {
+        "nutrient_focus": ["protein", "iron", "vitamin_b12", "zinc"],
+        "warnings": ["비타민B12 보충 권장", "철분 흡수 위해 비타민C와 함께"],
+        "score_impact": 0
+      },
+      "운동선수": {
+        "nutrient_adjustments": {
+          "calories": {"multiplier": 1.5},
+          "protein": {"multiplier": 1.8},
+          "carbohydrates": {"multiplier": 1.4}
+        },
+        "warnings": ["수분 보충 중요", "전해질 균형 유지"],
+        "score_impact": 0
+      },
+      "다이어트중": {
+        "nutrient_adjustments": {
+          "calories": {"multiplier": 0.8},
+          "protein": {"multiplier": 1.2, "reason": "근손실 방지"}
+        },
+        "nutrient_limits": {
+          "sugar": {"max": 15},
+          "fat": {"max": 20}
+        },
+        "warnings": ["극단적 식이제한 주의", "영양 균형 유지"],
+        "score_impact": -10
+      }
+    }
+  }
+}
