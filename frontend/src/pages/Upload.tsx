@@ -164,16 +164,16 @@ export default function Upload() {
                   <div className="risk-label" style={{ color: getRiskColor(result.risk_level) }}>
                     {getRiskText(result.risk_level)}
                   </div>
-                  <div className="risk-score">위험도: {result.risk_score}%</div>
+                  <div className="risk-score">위험도: {result.risk_score ?? 0}%</div>
                 </div>
               </div>
 
               <div className="recommendation-box">
                 <h3>권장사항</h3>
-                <p>{result.recommendation}</p>
+                <p>{result.recommendation || '분석 결과를 확인해주세요.'}</p>
               </div>
 
-              {result.analysis.detected_ingredients.length > 0 && (
+              {result.analysis?.detected_ingredients?.length > 0 && (
                 <div className="analysis-box">
                   <h3>검출된 성분</h3>
                   <div className="ingredient-list">
@@ -186,7 +186,7 @@ export default function Upload() {
                 </div>
               )}
 
-              {result.analysis.allergen_warnings.length > 0 && (
+              {result.analysis?.allergen_warnings?.length > 0 && (
                 <div className="warning-box allergen">
                   <h3>⚠️ 알레르기 경고</h3>
                   {result.analysis.allergen_warnings.map((warning, idx) => (
@@ -201,7 +201,7 @@ export default function Upload() {
                 </div>
               )}
 
-              {result.analysis.diet_warnings.length > 0 && (
+              {result.analysis?.diet_warnings?.length > 0 && (
                 <div className="warning-box diet">
                   <h3>🍽️ 식단 주의사항</h3>
                   {result.analysis.diet_warnings.map((warning, idx) => (

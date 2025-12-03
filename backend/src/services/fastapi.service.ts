@@ -25,7 +25,8 @@ class FastAPIService {
             const userInfo = {
                 user_id: userId || userProfile.uuid || "anonymous",
                 diet_type: userProfile.diet_type || "none",
-                allergies: userProfile.allergies?.map((a: any) => a.display_name) || [],
+                // ✅ 이미 문자열 배열이므로 그대로 사용
+                allergies: userProfile.allergies || [],
                 // RAG 분석을 위한 추가 정보
                 height: userProfile.height || null,
                 weight: userProfile.weight || null,

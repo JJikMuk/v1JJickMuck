@@ -41,7 +41,7 @@ export default function Settings() {
           setSelectedDietType(user.diet_type);
         }
         if (user.allergies && user.allergies.length > 0) {
-          setSelectedAllergies(user.allergies.map((a) => a.allergy_id));
+          setSelectedAllergies(user.allergies.map((a: { allergy_id: number }) => a.allergy_id));
         }
       }
     } catch (error) {
@@ -134,7 +134,14 @@ export default function Settings() {
           </div>
         </div>
 
+        {/* 버튼들을 settings-actions 안에 함께 배치 */}
         <div className="settings-actions">
+          <button
+            onClick={() => navigate('/health-settings')}
+            className="btn-back"
+          >
+            이전
+          </button>
           <button
             onClick={handleSave}
             disabled={saving}
@@ -142,12 +149,12 @@ export default function Settings() {
           >
             {saving ? '저장 중...' : '저장하고 계속하기'}
           </button>
-          <button
-            onClick={() => navigate('/upload')}
-            className="btn-skip"
-          >
-            건너뛰기
-          </button>
+        </div>
+
+        <div className="progress-indicator">
+          <span className="progress-dot"></span>
+          <span className="progress-dot"></span>
+          <span className="progress-dot active"></span>
         </div>
       </div>
     </div>

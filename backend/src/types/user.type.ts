@@ -43,3 +43,29 @@ export interface UserProfileUpdateRequest {
     diet_type?: DietType | null;
     allergy_ids?: number[];  // ALLERGIES 테이블의 id 배열
 }
+
+export interface Disease {
+  id: number;
+  name: string;
+  display_name: string;
+}
+
+export interface SpecialCondition {
+  id: number;
+  name: string;
+  display_name: string;
+}
+
+export interface UserFullProfile {
+  user_id: string;
+  email: string;
+  name: string;
+  diet_type: string | null;
+  height: number | null;
+  weight: number | null;
+  age_range: string | null;
+  gender: string | null;
+  allergies: string[];
+  diseases: string[];
+  special_conditions: string[];
+}

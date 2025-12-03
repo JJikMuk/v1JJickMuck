@@ -14,23 +14,25 @@ class ImageController {
             if (!req.file) {
                 return res.status(400).json({
                     success: false,
-                    message: "No image file uploaded"
+                    message: "이미지 파일이 필요합니다."
                 });
             }
 
-            const { buffer, originalname, mimetype } = req.file;
+            // 파일 정보
+            const file = req.file;
+            console.log("Uploaded file:", file.originalname, file.size);
 
-            // 파일 타입 검증 (이미지만 허용)
-            if (!mimetype.startsWith("image/")) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Only image files are allowed"
-                });
-            }
+            // Base64로 변환하여 FastAPI로 전송
+            const base64Image = file.buffer.toString("base64");
 
-            // 사용자 프로필 정보 가져오기
+            // 사용자 프로필 정보 가져오기 (RAG API용 전체 프로필)
             const user = req.user!;
-            const userProfile = await UserService.getUserByUUID(user.uuid);
+            const userProfile = await UserService.getUserFullProfile(user.uuid);
+
+            // 🔍 디버깅 로그 추가
+            console.log('=== image.controller - userProfile ===');
+            console.log(JSON.stringify(userProfile, null, 2));
+            console.log('======================================');
 
             if (!userProfile) {
                 return res.status(404).json({
@@ -39,13 +41,13 @@ class ImageController {
                 });
             }
 
-            // FastAPI로 이미지와 사용자 정보 전송 (OCR + RAG 분석)
+            // FastAPI로 이미지와 사용자 정보 전송
             const fastapiResponse = await FastAPIService.uploadImage(
-                buffer,
-                originalname,
-                mimetype,
-                userProfile,
-                user.uuid  // userId 추가
+                file.buffer,
+                file.originalname,
+                file.mimetype,
+                userProfile,  // 여기서 어떤 값이 전달되는지?
+                user.uuid
             );
 
             // 스캔 히스토리 저장
@@ -71,7 +73,7 @@ class ImageController {
                 success: true,
                 message: "Image uploaded successfully",
                 data: {
-                    filename: originalname,
+                    filename: file.originalname,
                     fastapi_response: fastapiResponse
                 }
             });
@@ -79,7 +81,7 @@ class ImageController {
             console.error("Image upload error:", error);
             return res.status(500).json({
                 success: false,
-                message: "Failed to upload image"
+                message: "이미지 업로드 중 오류가 발생했습니다."
             });
         }
     }

@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const token = api.getToken();
+    const token = localStorage.getItem('token');
     if (token) {
       fetchUser();
     } else {

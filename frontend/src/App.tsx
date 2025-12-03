@@ -7,6 +7,8 @@ import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import Upload from './pages/Upload';
 import Dashboard from './pages/Dashboard';
+import HealthSettings from './pages/HealthSettings';
+import HealthConditionsSettings from './pages/HealthConditionsSettings';
 import './styles/auth.css';
 import './styles/home.css';
 import './styles/settings.css';
@@ -50,6 +52,12 @@ function AppRoutes() {
 
       {/* Signup Page */}
       <Route path="/signup" element={<Signup />} />
+
+      {/* Health Settings Page */}
+      <Route path="/health-settings" element={<HealthSettings />} />
+
+      {/* Health Conditions Settings Page */}
+      <Route path="/health-conditions" element={<HealthConditionsSettings />} />
 
       {/* Settings Page */}
       <Route path="/settings" element={<Settings />} />

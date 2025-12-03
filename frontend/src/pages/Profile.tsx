@@ -1,176 +1,293 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { allergyService } from '../services/allergy.service';
-import type { Allergy } from '../services/allergy.service';
-import { userService } from '../services/user.service';
+import React, { useState, useEffect } from 'react';
+import {
+  getAllAllergies,
+  getAllDiseases,
+  getAllSpecialConditions,
+  getUserFullProfile,
+  updateUserProfile,
+  updateUserHealthProfile,
+  updateUserDiseases,
+  updateUserSpecialConditions,
+} from '../services/api';
+import '../styles/profile.css';
 
-const dietTypes = [
-  { value: 'none', label: '없음' },
-  { value: 'vegetarian', label: '채식주의 (Vegetarian)' },
-  { value: 'vegan', label: '비건 (Vegan)' },
-  { value: 'halal', label: '할랄 (Halal)' },
-  { value: 'kosher', label: '코셔 (Kosher)' },
-  { value: 'pescatarian', label: '페스카테리언 (Pescatarian)' },
-];
+interface MasterData {
+  id: number;
+  name: string;
+  display_name: string;
+}
 
-export default function Profile() {
-  const navigate = useNavigate();
-  const [allergies, setAllergies] = useState<Allergy[]>([]);
-  const [name, setName] = useState<string>('');
-  const [selectedAllergies, setSelectedAllergies] = useState<number[]>([]);
-  const [selectedDietType, setSelectedDietType] = useState<string>('none');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+const Profile: React.FC = () => {
+  // 로딩 상태
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 마스터 데이터
+  const [allergies, setAllergies] = useState<MasterData[]>([]);
+  const [diseases, setDiseases] = useState<MasterData[]>([]);
+  const [conditions, setConditions] = useState<MasterData[]>([]);
+
+  // 유저 프로필
+  const [name, setName] = useState('');
+  const [dietType, setDietType] = useState('');
+  const [height, setHeight] = useState('');
+  const [weight, setWeight] = useState('');
+  const [ageRange, setAgeRange] = useState('');
+  const [gender, setGender] = useState('');
+  const [selectedAllergyIds, setSelectedAllergyIds] = useState<number[]>([]);
+  const [selectedDiseaseIds, setSelectedDiseaseIds] = useState<number[]>([]);
+  const [selectedConditionIds, setSelectedConditionIds] = useState<number[]>([]);
+
+  // 옵션 데이터
+  const ageRanges = ['10대', '20대', '30대', '40대', '50대', '60대 이상'];
+  const genders = [
+    { value: 'male', label: '남성' },
+    { value: 'female', label: '여성' },
+    { value: 'other', label: '기타' },
+  ];
+  const dietTypes = [
+    { value: 'normal', label: '일반' },
+    { value: 'vegetarian', label: '채식주의' },
+    { value: 'vegan', label: '비건' },
+    { value: 'pescatarian', label: '페스코' },
+    { value: 'halal', label: '할랄' },
+    { value: 'kosher', label: '코셔' },
+  ];
 
   useEffect(() => {
-    fetchData();
+    loadData();
   }, []);
 
-  const fetchData = async () => {
+  const loadData = async () => {
     try {
-      // 알레르기 목록 가져오기
-      const allergyResponse = await allergyService.getAllAllergies();
-      if (allergyResponse.success && allergyResponse.data) {
-        setAllergies(allergyResponse.data);
-      }
+      setIsLoading(true);
 
-      // 사용자 프로필 가져오기 (기존 설정값)
-      const profileResponse = await userService.getProfile();
-      if (profileResponse.success && profileResponse.data) {
-        const user = profileResponse.data;
-        if (user.name) {
-          setName(user.name);
-        }
-        if (user.diet_type) {
-          setSelectedDietType(user.diet_type);
-        }
-        if (user.allergies && user.allergies.length > 0) {
-          setSelectedAllergies(user.allergies.map((a) => a.allergy_id));
-        }
-      }
+      // 마스터 데이터 로드
+      const [allergiesData, diseasesData, conditionsData, profileData] = await Promise.all([
+        getAllAllergies(),
+        getAllDiseases(),
+        getAllSpecialConditions(),
+        getUserFullProfile(),
+      ]);
+
+      setAllergies(allergiesData);
+      setDiseases(diseasesData);
+      setConditions(conditionsData);
+
+      // 프로필 데이터 설정
+      setName(profileData.name || '');
+      setDietType(profileData.diet_type || '');
+      setHeight(profileData.height?.toString() || '');
+      setWeight(profileData.weight?.toString() || '');
+      setAgeRange(profileData.age_range || '');
+      setGender(profileData.gender || '');
+
+      // ID 매칭 (display_name으로 비교)
+      setSelectedAllergyIds(
+        allergiesData
+          .filter((a: MasterData) => profileData.allergies.includes(a.display_name))
+          .map((a: MasterData) => a.id)
+      );
+      setSelectedDiseaseIds(
+        diseasesData
+          .filter((d: MasterData) => profileData.diseases.includes(d.display_name))
+          .map((d: MasterData) => d.id)
+      );
+      setSelectedConditionIds(
+        conditionsData
+          .filter((c: MasterData) => profileData.special_conditions.includes(c.display_name))
+          .map((c: MasterData) => c.id)
+      );
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Failed to load data:', error);
+      alert('데이터를 불러오는데 실패했습니다.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  };
-
-  const handleAllergyToggle = (allergyId: number) => {
-    setSelectedAllergies((prev) =>
-      prev.includes(allergyId)
-        ? prev.filter((id) => id !== allergyId)
-        : [...prev, allergyId]
-    );
   };
 
   const handleSave = async () => {
-    if (!name || name.trim().length === 0) {
-      alert('이름을 입력해주세요.');
-      return;
-    }
-
-    setSaving(true);
     try {
-      const response = await userService.updateProfile({
-        name: name.trim(),
-        diet_type: selectedDietType,
-        allergy_ids: selectedAllergies,
+      setIsSaving(true);
+
+      // 기본 프로필 업데이트
+      await updateUserProfile({
+        name,
+        diet_type: dietType || null,
+        allergy_ids: selectedAllergyIds,
       });
 
-      if (response.success) {
-        alert('프로필이 성공적으로 업데이트되었습니다.');
-        navigate('/');
-      } else {
-        alert('프로필 저장 실패: ' + response.message);
-      }
+      // 건강 프로필 업데이트
+      await updateUserHealthProfile({
+        height: height ? parseFloat(height) : undefined,
+        weight: weight ? parseFloat(weight) : undefined,
+        age_range: ageRange || undefined,
+        gender: gender || undefined,
+      });
+
+      // 질병 업데이트
+      await updateUserDiseases(selectedDiseaseIds);
+
+      // 특수 상태 업데이트
+      await updateUserSpecialConditions(selectedConditionIds);
+
+      alert('프로필이 저장되었습니다.');
     } catch (error) {
-      console.error('Save error:', error);
-      alert('프로필 저장 중 오류가 발생했습니다.');
+      console.error('Failed to save profile:', error);
+      alert('저장에 실패했습니다.');
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="profile-page">
-        <div className="loading">로딩 중...</div>
-      </div>
-    );
+  const toggleSelection = (
+    id: number,
+    selectedIds: number[],
+    setSelectedIds: React.Dispatch<React.SetStateAction<number[]>>
+  ) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((i) => i !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="loading">로딩 중...</div>;
   }
 
   return (
-    <div className="profile-page">
-      <div className="profile-container">
-        <div className="profile-header">
-          <h1>프로필 수정</h1>
-          <p>이름, 식단 타입, 알레르기 정보를 수정할 수 있습니다.</p>
-        </div>
+    <div className="profile-settings-page">
+      <h1>프로필 설정</h1>
 
-        <div className="profile-section">
-          <h2>이름</h2>
+      {/* 기본 정보 */}
+      <section className="section">
+        <h2>기본 정보</h2>
+        <div className="form-group">
+          <label>이름</label>
           <input
             type="text"
-            className="name-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="이름을 입력하세요"
           />
         </div>
-
-        <div className="profile-section">
-          <h2>식단 타입</h2>
-          <div className="diet-type-grid">
-            {dietTypes.map((diet) => (
-              <label key={diet.value} className="diet-type-option">
-                <input
-                  type="radio"
-                  name="diet_type"
-                  value={diet.value}
-                  checked={selectedDietType === diet.value}
-                  onChange={(e) => setSelectedDietType(e.target.value)}
-                />
-                <span>{diet.label}</span>
-              </label>
+        <div className="form-group">
+          <label>식단 타입</label>
+          <select value={dietType} onChange={(e) => setDietType(e.target.value)}>
+            <option value="">선택하세요</option>
+            {dietTypes.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
             ))}
+          </select>
+        </div>
+      </section>
+
+      {/* 신체 정보 */}
+      <section className="section">
+        <h2>신체 정보</h2>
+        <div className="form-row">
+          <div className="form-group">
+            <label>키 (cm)</label>
+            <input
+              type="number"
+              value={height}
+              onChange={(e) => setHeight(e.target.value)}
+              placeholder="170"
+            />
+          </div>
+          <div className="form-group">
+            <label>몸무게 (kg)</label>
+            <input
+              type="number"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              placeholder="65"
+            />
           </div>
         </div>
-
-        <div className="profile-section">
-          <h2>알레르기 항목</h2>
-          <p className="section-description">
-            해당되는 알레르기 항목을 모두 선택해주세요.
-          </p>
-          <div className="allergy-grid">
-            {allergies.map((allergy) => (
-              <label key={allergy.id} className="allergy-option">
-                <input
-                  type="checkbox"
-                  checked={selectedAllergies.includes(allergy.id)}
-                  onChange={() => handleAllergyToggle(allergy.id)}
-                />
-                <span>{allergy.display_name}</span>
-              </label>
-            ))}
+        <div className="form-row">
+          <div className="form-group">
+            <label>연령대</label>
+            <select value={ageRange} onChange={(e) => setAgeRange(e.target.value)}>
+              <option value="">선택하세요</option>
+              {ageRanges.map((age) => (
+                <option key={age} value={age}>
+                  {age}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>성별</label>
+            <select value={gender} onChange={(e) => setGender(e.target.value)}>
+              <option value="">선택하세요</option>
+              {genders.map((g) => (
+                <option key={g.value} value={g.value}>
+                  {g.label}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
+      </section>
 
-        <div className="profile-actions">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="btn-save"
-          >
-            {saving ? '저장 중...' : '저장하기'}
-          </button>
-          <button
-            onClick={() => navigate('/')}
-            className="btn-cancel"
-          >
-            취소
-          </button>
+      {/* 알레르기 */}
+      <section className="section">
+        <h2>알레르기</h2>
+        <div className="chip-container">
+          {allergies.map((allergy) => (
+            <button
+              key={allergy.id}
+              className={`chip ${selectedAllergyIds.includes(allergy.id) ? 'selected' : ''}`}
+              onClick={() => toggleSelection(allergy.id, selectedAllergyIds, setSelectedAllergyIds)}
+            >
+              {allergy.display_name}
+            </button>
+          ))}
         </div>
-      </div>
+      </section>
+
+      {/* 질병/건강 상태 */}
+      <section className="section">
+        <h2>질병/건강 상태</h2>
+        <div className="chip-container">
+          {diseases.map((disease) => (
+            <button
+              key={disease.id}
+              className={`chip disease ${selectedDiseaseIds.includes(disease.id) ? 'selected' : ''}`}
+              onClick={() => toggleSelection(disease.id, selectedDiseaseIds, setSelectedDiseaseIds)}
+            >
+              {disease.display_name}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* 특수 상태 */}
+      <section className="section">
+        <h2>특수 상태</h2>
+        <div className="chip-container">
+          {conditions.map((condition) => (
+            <button
+              key={condition.id}
+              className={`chip condition ${selectedConditionIds.includes(condition.id) ? 'selected' : ''}`}
+              onClick={() => toggleSelection(condition.id, selectedConditionIds, setSelectedConditionIds)}
+            >
+              {condition.display_name}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* 저장 버튼 */}
+      <button className="save-button" onClick={handleSave} disabled={isSaving}>
+        {isSaving ? '저장 중...' : '저장하기'}
+      </button>
     </div>
   );
-}
+};
+
+export default Profile;

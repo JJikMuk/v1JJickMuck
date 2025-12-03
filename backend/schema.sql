@@ -8,6 +8,10 @@ CREATE TABLE USERS (
     password VARCHAR(255) NOT NULL,
     name VARCHAR(100) NOT NULL,
     diet_type VARCHAR(50) DEFAULT NULL COMMENT 'vegetarian, vegan, halal, kosher, pescatarian, none',
+    height DECIMAL(5,2) DEFAULT NULL COMMENT '키 (cm)',
+    weight DECIMAL(5,2) DEFAULT NULL COMMENT '몸무게 (kg)',
+    age_range VARCHAR(20) DEFAULT NULL COMMENT '연령대 (10대, 20대, 30대 등)',
+    gender ENUM('male', 'female', 'other') DEFAULT NULL COMMENT '성별',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_uuid (uuid),
@@ -87,3 +91,73 @@ CREATE TABLE SCAN_HISTORY (
     INDEX idx_risk_level (risk_level),
     INDEX idx_scanned_at (scanned_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ====================================
+-- 질병 마스터 테이블
+-- ====================================
+CREATE TABLE DISEASES (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL COMMENT '질병명 (예: diabetes, hypertension)',
+    display_name VARCHAR(100) NOT NULL COMMENT '표시명 (예: 당뇨, 고혈압)',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ====================================
+-- 유저-질병 관계 테이블 (Many-to-Many)
+-- ====================================
+CREATE TABLE USER_DISEASES (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    disease_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES USERS(id) ON DELETE CASCADE,
+    FOREIGN KEY (disease_id) REFERENCES DISEASES(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_disease (user_id, disease_id),
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ====================================
+-- 특수 상태 마스터 테이블
+-- ====================================
+CREATE TABLE SPECIAL_CONDITIONS (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL COMMENT '상태명 (예: pregnant, breastfeeding)',
+    display_name VARCHAR(100) NOT NULL COMMENT '표시명 (예: 임신, 수유중)',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ====================================
+-- 유저-특수상태 관계 테이블 (Many-to-Many)
+-- ====================================
+CREATE TABLE USER_SPECIAL_CONDITIONS (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    condition_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES USERS(id) ON DELETE CASCADE,
+    FOREIGN KEY (condition_id) REFERENCES SPECIAL_CONDITIONS(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_condition (user_id, condition_id),
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ====================================
+-- 기본 질병 데이터 삽입
+-- ====================================
+INSERT INTO DISEASES (name, display_name) VALUES
+('diabetes', '당뇨'),
+('hypertension', '고혈압'),
+('hyperlipidemia', '고지혈증'),
+('kidney_disease', '신장질환'),
+('heart_disease', '심장질환'),
+('gout', '통풍');
+
+-- ====================================
+-- 기본 특수 상태 데이터 삽입
+-- ====================================
+INSERT INTO SPECIAL_CONDITIONS (name, display_name) VALUES
+('pregnant', '임신'),
+('breastfeeding', '수유중'),
+('child', '어린이'),
+('elderly', '노인');

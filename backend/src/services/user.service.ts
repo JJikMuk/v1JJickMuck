@@ -1,35 +1,68 @@
-import UserModel from "../models/user.model";
+import UsersModel from '../models/user.model';
 
 class UserService {
-    static async getUserByUUID(uuid: string) {
-        // 1. UUID로 user_id 가져오기
-        const userId = await UserModel.getUserIdByUuid(uuid);
-
-        if (!userId) {
-            return null;
-        }
-
-        // 2. user_id로 유저 정보 + 알레르기 정보 가져오기
-        const userWithAllergies = await UserModel.getUserWithAllergies(userId);
-
-        return userWithAllergies;
+    // ============================================
+    // 유저 전체 프로필 (RAG API용)
+    // ============================================
+    static async getUserFullProfile(userUuid: string) {
+        return await UsersModel.getUserFullProfile(userUuid);
     }
 
-    static async updateUserProfile(uuid: string, name?: string, dietType?: string | null, allergyIds?: number[]) {
-        // 1. UUID로 user_id 가져오기
-        const userId = await UserModel.getUserIdByUuid(uuid);
+    static async getUserIdByUuid(userUuid: string) {
+        return await UsersModel.getUserIdByUuid(userUuid);
+    }
 
-        if (!userId) {
-            throw new Error("User not found");
+    static async getUserWithAllergies(userId: number) {
+        return await UsersModel.getUserWithAllergies(userId);
+    }
+
+    static async updateUserProfile(userId: number, name?: string, dietType?: string | null, allergyIds?: number[]) {
+        return await UsersModel.updateUserProfile(userId, name, dietType, allergyIds);
+    }
+
+    // ============================================
+    // 질병 관련
+    // ============================================
+    static async getAllDiseases() {
+        return await UsersModel.getAllDiseases();
+    }
+
+    static async getUserDiseases(userId: number) {
+        return await UsersModel.getUserDiseases(userId);
+    }
+
+    static async updateUserDiseases(userId: number, diseaseIds: number[]) {
+        return await UsersModel.updateUserDiseases(userId, diseaseIds);
+    }
+
+    // ============================================
+    // 특수 상태 관련
+    // ============================================
+    static async getAllSpecialConditions() {
+        return await UsersModel.getAllSpecialConditions();
+    }
+
+    static async getUserSpecialConditions(userId: number) {
+        return await UsersModel.getUserSpecialConditions(userId);
+    }
+
+    static async updateUserSpecialConditions(userId: number, conditionIds: number[]) {
+        return await UsersModel.updateUserSpecialConditions(userId, conditionIds);
+    }
+
+    // ============================================
+    // 건강 프로필 업데이트
+    // ============================================
+    static async updateUserHealthProfile(
+        userId: number,
+        profileData: {
+            height?: number;
+            weight?: number;
+            age_range?: string;
+            gender?: string;
         }
-
-        // 2. 프로필 업데이트
-        await UserModel.updateUserProfile(userId, name, dietType, allergyIds);
-
-        // 3. 업데이트된 유저 정보 반환
-        const updatedUser = await UserModel.getUserWithAllergies(userId);
-
-        return updatedUser;
+    ) {
+        return await UsersModel.updateUserHealthProfile(userId, profileData);
     }
 }
 

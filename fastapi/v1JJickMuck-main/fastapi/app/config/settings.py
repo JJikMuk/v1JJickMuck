@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     # Gemini API (선택사항 - 기존 호환성을 위해)
     gemini_api_key: str = ""
     
+    # RAG API URL 추가
+    rag_api_url: str = "http://localhost:8000"
+    
     @property
     def database_url(self) -> str:
         """동기 DB URL"""

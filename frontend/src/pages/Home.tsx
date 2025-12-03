@@ -61,23 +61,33 @@ export default function Home({ isAuthenticated, userName, onLogout }: HomeProps)
 
     // 로그인한 경우 프로필 확인
     try {
-      const response = await userService.getProfile();
+      const response = await userService.getFullProfile();
 
       if (response.success && response.data) {
         const user = response.data;
 
-        // 알레르기나 식단 타입이 설정되지 않은 경우 설정 페이지로
-        if (!user.diet_type || !user.allergies || user.allergies.length === 0) {
-          navigate('/settings');
-        } else {
-          // 설정이 완료된 경우 업로드 페이지로
+        // 모든 필수 정보가 설정되어 있는지 확인
+        const hasHealthInfo = user.height && user.weight && user.age_range && user.gender;
+        const hasAllergyOrDiet = user.diet_type || (user.allergies && user.allergies.length > 0);
+
+        if (hasHealthInfo && hasAllergyOrDiet) {
+          // 모든 설정이 완료된 경우 업로드 페이지로
           navigate('/upload');
+        } else if (!hasHealthInfo) {
+          // 신체 정보가 없으면 첫 번째 설정 페이지로
+          navigate('/health-settings');
+        } else {
+          // 신체 정보는 있지만 알레르기/식단 정보가 없으면
+          navigate('/settings');
         }
+      } else {
+        // 프로필 조회 실패 시 첫 번째 설정 페이지로
+        navigate('/health-settings');
       }
     } catch (error) {
       console.error('Failed to fetch profile:', error);
-      // 에러 발생 시 설정 페이지로
-      navigate('/settings');
+      // 에러 발생 시 첫 번째 설정 페이지로
+      navigate('/health-settings');
     }
   };
 

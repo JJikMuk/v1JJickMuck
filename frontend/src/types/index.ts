@@ -22,12 +22,48 @@ export interface User {
   name: string;
   diet_type: string | null;
   allergies: Allergy[];
+  // 새로 추가된 필드
+  height: number | null;
+  weight: number | null;
+  age_range: string | null;
+  gender: string | null;
+  diseases?: Disease[];
+  special_conditions?: SpecialCondition[];
 }
 
 export interface Allergy {
   allergy_id: number;
   allergy_name: string;
   display_name?: string;
+}
+
+// 새로 추가
+export interface Disease {
+  id: number;
+  name: string;
+  display_name: string;
+}
+
+// 새로 추가
+export interface SpecialCondition {
+  id: number;
+  name: string;
+  display_name: string;
+}
+
+// 전체 프로필 타입 (RAG API용)
+export interface UserFullProfile {
+  user_id: string;
+  email: string;
+  name: string;
+  diet_type: string | null;
+  height: number | null;
+  weight: number | null;
+  age_range: string | null;
+  gender: string | null;
+  allergies: string[];
+  diseases: string[];
+  special_conditions: string[];
 }
 
 // Image Upload Types

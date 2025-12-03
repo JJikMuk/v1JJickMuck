@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Form, Header, HTTPException
+from fastapi import FastAPI, File, UploadFile, Form, Header, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
@@ -10,7 +10,9 @@ from typing import Optional, List
 import cv2
 import numpy as np
 from dotenv import load_dotenv
-import httpx
+from pydantic import BaseModel
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import httpx  # 추가 (비동기 HTTP 클라이언트)
 
 # 현재 디렉토리를 sys.path에 추가 (모듈 임포트를 위해)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -53,6 +55,40 @@ logger = logging.getLogger(__name__)
 ocr_model = None
 rag_service = None
 gpt_service = None
+security = HTTPBearer()
+API_KEY = os.getenv("API_KEY", "your-fastapi-secret-key")
+
+
+# ============================================
+# Pydantic 모델 정의
+# ============================================
+
+class NutritionData(BaseModel):
+    """영양성분 데이터"""
+    calories: Optional[str] = None
+    carbs: Optional[str] = None
+    protein: Optional[str] = None
+    fat: Optional[str] = None
+    sodium: Optional[str] = None
+    sugar: Optional[str] = None
+    saturated_fat: Optional[str] = None
+    trans_fat: Optional[str] = None
+    cholesterol: Optional[str] = None
+    total_content: Optional[str] = None
+    serving_size: Optional[str] = None
+
+
+class OCRResult(BaseModel):
+    """OCR 결과 모델"""
+    nutrition: dict = {}
+    materials: List[str] = []
+
+
+class RAGAnalysisRequestBody(BaseModel):
+    """RAG 분석 요청 모델"""
+    product_name: str
+    ocr_result: OCRResult
+    user_info: dict
 
 
 @asynccontextmanager
@@ -100,11 +136,13 @@ app = FastAPI(
     description="""
     ## 식품 영양 분석 OCR + RAG + LLM 통합 API
     
-    이미지에서 영양성분/원재료를 추출하고, 사용자 프로필 기반으로 위험도를 분석합니다.
+    ### API 구성
+    - **POST /api/ocr** - YOLO + EasyOCR로 이미지에서 텍스트 추출
+    - **POST /api/analyze** - RAG + GPT로 사용자 맞춤 위험도 분석
     
     ### 아키텍처
     ```
-    Front → Node.js → FastAPI(OCR + RAG + LLM) → Node.js → Front
+    Front → Node.js → FastAPI(/api/ocr) → Node.js → FastAPI(/api/analyze) → Node.js → Front
     ```
     
     ### 파이프라인
@@ -147,45 +185,35 @@ ALLERGEN_MAPPING = {
     "복숭아": ["복숭아", "peach"],
 }
 
-def check_allergen_match(detected_allergens: List[str], user_allergies: List[str]) -> List[dict]:
-    """
-    감지된 알레르기 성분과 사용자 알레르기를 매칭
-    """
-    warnings = []
+
+def check_allergen_match(detected_materials: list, allergies: list) -> list:
+    """원재료와 사용자 알레르기 매칭"""
+    allergen_warnings = []
     
-    for user_allergy in user_allergies:
-        user_allergy_lower = user_allergy.lower()
-        
-        # 매핑에서 관련 키워드 찾기
-        related_keywords = []
-        for key, keywords in ALLERGEN_MAPPING.items():
-            if user_allergy_lower in [k.lower() for k in keywords] or user_allergy == key:
-                related_keywords = keywords
-                break
-        
-        if not related_keywords:
-            related_keywords = [user_allergy]
-        
-        # 감지된 알레르기에서 매칭 확인
-        for detected in detected_allergens:
-            detected_lower = detected.lower()
-            for keyword in related_keywords:
-                if keyword.lower() in detected_lower or detected_lower in keyword.lower():
-                    warnings.append({
-                        "allergen": user_allergy,
-                        "detected": detected,
-                        "severity": "high",
-                        "message": f"⚠️ {user_allergy} 알레르기 주의: {detected} 성분이 포함되어 있습니다."
-                    })
-                    break
+    # None 값 필터링
+    valid_allergies = [a for a in allergies if a is not None and isinstance(a, str)]
     
-    return warnings
+    for material in detected_materials:
+        if material is None:
+            continue
+        material_lower = material.lower()
+        
+        for user_allergy in valid_allergies:
+            user_allergy_lower = user_allergy.lower()
+            
+            if user_allergy_lower in material_lower or material_lower in user_allergy_lower:
+                allergen_warnings.append({
+                    "allergen": user_allergy,
+                    "ingredient": material,
+                    "severity": "high",
+                    "message": f"'{material}'에 '{user_allergy}' 알레르기 성분이 포함되어 있습니다."
+                })
+    
+    return allergen_warnings
 
 
 def check_diet_warnings(detected_ingredients: List[str], diet_type: str) -> List[dict]:
-    """
-    식단 타입에 따른 경고 생성
-    """
+    """식단 타입에 따른 경고 생성"""
     warnings = []
     
     if diet_type == "none":
@@ -224,112 +252,71 @@ async def health_check():
     """헬스 체크 엔드포인트"""
     return {
         "status": "healthy", 
-        "ocr_model": "YOLO + EasyOCR",
+        "ocr_model": ocr_model is not None,
         "rag_service": rag_service is not None,
         "gpt_service": gpt_service is not None
     }
 
 
-def convert_ocr_to_product_data(
-    nutrition_result: dict,
-    material_result: list,
-    product_name: str
-) -> ProductData:
-    """
-    OCR 결과를 RAG의 ProductData 모델로 변환
-    """
-    # 영양성분 변환
-    nutritional_info = None
-    if nutrition_result:
-        nutritional_info = NutritionalInfo(
-            calories=nutrition_result.get("kcal", [None])[0] if "kcal" in nutrition_result else None,
-            carbohydrates=nutrition_result.get("탄수화물", [None])[0] if "탄수화물" in nutrition_result else None,
-            protein=nutrition_result.get("단백질", [None])[0] if "단백질" in nutrition_result else None,
-            fat=nutrition_result.get("지방", [None])[0] if "지방" in nutrition_result else None,
-            sodium=nutrition_result.get("나트륨", [None])[0] if "나트륨" in nutrition_result else None,
-            sugar=nutrition_result.get("당류", [None])[0] if "당류" in nutrition_result else None,
-            cholesterol=nutrition_result.get("콜레스테롤", [None])[0] if "콜레스테롤" in nutrition_result else None,
-            saturated_fat=nutrition_result.get("포화지방", [None])[0] if "포화지방" in nutrition_result else None,
-            trans_fat=nutrition_result.get("트랜스지방", [None])[0] if "트랜스지방" in nutrition_result else None,
-        )
-    
-    return ProductData(
-        product_name=product_name,
-        nutritional_info=nutritional_info,
-        ingredients=material_result if material_result else [],
-        allergens=material_result if material_result else []  # 원재료에서 추출된 알레르기 성분
-    )
+# ============================================
+# API 1: OCR API (YOLO + EasyOCR)
+# ============================================
 
-
-def convert_user_info_to_profile(user_data: dict) -> UserProfile:
-    """
-    Node.js에서 받은 user_info를 RAG의 UserProfile 모델로 변환
-    """
-    return UserProfile(
-        height=user_data.get("height"),
-        weight=user_data.get("weight"),
-        age_range=user_data.get("age_range", "20대"),
-        gender=user_data.get("gender"),
-        allergies=user_data.get("allergies", []),
-        diseases=user_data.get("diseases", []),
-        special_conditions=user_data.get("special_conditions", [])
-    )
-
-
-@app.post("/api/upload")
-async def upload_image(
+@app.post("/api/ocr", tags=["OCR"])
+async def ocr_extract(
     file: UploadFile = File(...),
-    user_info: str = Form(...)
+    product_name: Optional[str] = Form(None)
 ):
     """
-    이미지를 받아 YOLO + EasyOCR로 텍스트를 추출하고
-    RAG + GPT로 사용자 맞춤 위험도 분석
+    ## YOLO + EasyOCR로 이미지에서 영양성분/원재료 텍스트 추출
     
-    **파이프라인**:
-    1. YOLO로 영양성분표/원재료 영역 감지
-    2. EasyOCR로 텍스트 추출
-    3. RAG로 관련 규칙/지식 검색
-    4. GPT로 개인화된 분석 결과 생성
+    ### Request
+    - **file**: 이미지 파일 (jpg, png 등)
+    - **product_name**: 제품명 (선택, 없으면 파일명 사용)
+    
+    ### Response
+    ```json
+    {
+        "status": "success",
+        "product_name": "제품명",
+        "ocr_result": {
+            "nutrition": {"calories": "200", "protein": "5g", ...},
+            "materials": ["밀가루", "설탕", "우유", ...]
+        },
+        "raw_ocr": {
+            "nutrition": {"kcal": 200, "단백질": 5, ...},
+            "materials": ["밀가루", "설탕", "우유", ...]
+        }
+    }
+    ```
     """
     try:
-        # user_info JSON 파싱
-        user_data = json.loads(user_info)
-        diet_type = user_data.get("diet_type", "none")
-        allergies = user_data.get("allergies", [])
-        user_id = user_data.get("user_id", "anonymous")
-
         # 이미지 읽기 및 OpenCV 형식으로 변환
         image_bytes = await file.read()
         nparr = np.frombuffer(image_bytes, np.uint8)
         image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         if image is None:
-            return {
-                "status": "error",
-                "product_name": "이미지 오류",
-                "risk_level": "yellow",
-                "risk_score": 50,
-                "analysis": {
-                    "detected_ingredients": [],
-                    "allergen_warnings": [],
-                    "diet_warnings": [],
-                    "nutrition": {}
-                },
-                "recommendation": "이미지를 읽을 수 없습니다. 다른 이미지를 시도해주세요.",
-                "risk_reason": "이미지 디코딩 실패"
-            }
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "status": "error",
+                    "message": "이미지를 읽을 수 없습니다. 다른 이미지를 시도해주세요.",
+                    "product_name": product_name or "이미지 오류",
+                    "ocr_result": {"nutrition": {}, "materials": []},
+                    "raw_ocr": {"nutrition": {}, "materials": []}
+                }
+            )
 
-        # ============================================
-        # 1단계: YOLO + EasyOCR로 텍스트 추출
-        # ============================================
-        logger.info("📷 OCR 처리 시작...")
+        # 제품명 설정
+        final_product_name = product_name or (file.filename.rsplit('.', 1)[0] if file.filename else "제품명 미확인")
+
+        # YOLO + EasyOCR 실행
+        logger.info(f"📷 OCR 처리 시작: {final_product_name}")
         nutrition_result, material_result = ocr_model.execute(image)
         logger.info(f"✅ OCR 완료 - 영양성분: {len(nutrition_result) if nutrition_result else 0}개, 원재료: {len(material_result) if material_result else 0}개")
 
-        # 제품명 추출 (파일명에서)
-        product_name = file.filename.rsplit('.', 1)[0] if file.filename else "제품명 미확인"
-
-        # 영양성분 파싱 (Node.js 응답용)
+        # 영양성분 파싱 (표준화된 키)
         nutrition_data = {}
         if nutrition_result:
             nutrition_mapping = {
@@ -350,187 +337,566 @@ async def upload_image(
                     value = nutrition_result[korean_key][0]
                     nutrition_data[english_key] = str(value)
 
-        # 감지된 알레르기 성분
-        detected_allergens = material_result if material_result else []
-
-        # 기본 알레르기/식단 경고 (OCR 기반)
-        allergen_warnings = check_allergen_match(detected_allergens, allergies)
-        diet_warnings = check_diet_warnings(detected_allergens, diet_type)
-
-        # ============================================
-        # 2단계: RAG + GPT 분석 (서비스가 초기화된 경우)
-        # ============================================
-        rag_analysis = None
-        
-        if RAG_AVAILABLE and rag_service and gpt_service:
-            try:
-                logger.info("🔍 RAG + GPT 분석 시작...")
-                
-                # OCR 결과를 RAG 모델로 변환
-                product_data = convert_ocr_to_product_data(
-                    nutrition_result, 
-                    material_result, 
-                    product_name
-                )
-                user_profile = convert_user_info_to_profile(user_data)
-                
-                # RAG 요청 생성
-                rag_request = RAGAnalysisRequest(
-                    user_id=user_id,
-                    product_data=product_data,
-                    user_profile=user_profile
-                )
-                
-                # 1. 규칙 기반 분석
-                rules = await rag_service.get_matching_rules(
-                    user_allergies=user_profile.allergies,
-                    user_diseases=user_profile.diseases
-                )
-                
-                # 2. 영양 정보 딕셔너리 변환
-                nutritional_dict = {}
-                if product_data.nutritional_info:
-                    info = product_data.nutritional_info
-                    nutritional_dict = {
-                        "calories": info.calories,
-                        "carbohydrates": info.carbohydrates,
-                        "protein": info.protein,
-                        "fat": info.fat,
-                        "sodium": info.sodium,
-                        "sugar": info.sugar,
-                        "cholesterol": info.cholesterol,
-                        "saturated_fat": info.saturated_fat,
-                        "trans_fat": info.trans_fat
-                    }
-                
-                # 3. 규칙 적용
-                rule_result = await rag_service.apply_rules(
-                    rules=rules,
-                    product_allergens=product_data.allergens or [],
-                    nutritional_info=nutritional_dict
-                )
-                
-                # 4. RAG 컨텍스트 검색
-                context = await rag_service.get_context_for_analysis(
-                    allergies=user_profile.allergies,
-                    diseases=user_profile.diseases,
-                    product_allergens=product_data.allergens or []
-                )
-                
-                # 5. GPT 분석
-                rag_analysis = await gpt_service.analyze(rag_request, context, rule_result)
-                
-                logger.info(f"✅ RAG 분석 완료 - suitability: {rag_analysis.suitability}, score: {rag_analysis.score}")
-                
-            except Exception as e:
-                logger.error(f"⚠️ RAG 분석 실패 (OCR 결과만 반환): {e}")
-                import traceback
-                traceback.print_exc()
-
-        # ============================================
-        # 3단계: 최종 응답 구성
-        # ============================================
-        
-        # RAG 분석 결과가 있으면 사용, 없으면 OCR 기반 결과 사용
-        if rag_analysis:
-            # RAG 결과 기반 위험도
-            suitability_to_level = {
-                "danger": "red",
-                "warning": "yellow", 
-                "safe": "green"
-            }
-            risk_level = suitability_to_level.get(rag_analysis.suitability, "yellow")
-            risk_score = rag_analysis.score
-            recommendation = rag_analysis.nutritional_advice
-            risk_reason = "; ".join(rag_analysis.recommendations) if rag_analysis.recommendations else "분석 완료"
-            
-            # 대안 제품
-            alternatives = [
-                {"product_name": alt.product_name, "reason": alt.reason}
-                for alt in rag_analysis.alternatives
-            ] if rag_analysis.alternatives else []
-        else:
-            # OCR 기반 위험도 (기존 로직)
-            if len(allergen_warnings) > 0:
-                risk_level = "red"
-                risk_score = 90
-                risk_reason = f"알레르기 성분 감지: {', '.join([w['detected'] for w in allergen_warnings])}"
-            elif len(diet_warnings) > 0:
-                risk_level = "yellow"
-                risk_score = 50
-                risk_reason = f"식단 주의: {', '.join([w['reason'] for w in diet_warnings])}"
-            else:
-                risk_level = "green"
-                risk_score = 10
-                risk_reason = "알레르기 및 식단 위험 요소 없음"
-            
-            if risk_level == "red":
-                recommendation = f"⚠️ 주의! {', '.join(allergies)} 알레르기 성분이 포함되어 있습니다. 섭취를 피해주세요."
-            elif risk_level == "yellow":
-                recommendation = "식단 타입에 맞지 않는 성분이 포함되어 있습니다. 섭취 전 확인이 필요합니다."
-            else:
-                recommendation = "✅ 안전합니다. 알레르기 및 식단 위험 요소가 감지되지 않았습니다."
-            
-            alternatives = []
-
-        # 최종 응답
-        result = {
+        return {
             "status": "success",
-            "product_name": product_name,
-            "risk_level": risk_level,
-            "risk_score": risk_score,
-            "analysis": {
-                "detected_ingredients": detected_allergens,
-                "allergen_warnings": allergen_warnings,
-                "diet_warnings": diet_warnings,
+            "product_name": final_product_name,
+            "ocr_result": {
                 "nutrition": nutrition_data,
-                "alternatives": alternatives
+                "materials": material_result if material_result else []
             },
-            "recommendation": recommendation,
-            "risk_reason": risk_reason,
-            "rag_enabled": rag_analysis is not None,
             "raw_ocr": {
                 "nutrition": {k: v[0] for k, v in nutrition_result.items()} if nutrition_result else {},
-                "materials": material_result
+                "materials": material_result if material_result else []
             }
         }
 
-        return result
-
-    except json.JSONDecodeError as e:
-        return {
-            "status": "error",
-            "product_name": "분석 실패",
-            "risk_level": "yellow",
-            "risk_score": 50,
-            "analysis": {
-                "detected_ingredients": [],
-                "allergen_warnings": [],
-                "diet_warnings": [],
-                "nutrition": {}
-            },
-            "recommendation": f"사용자 정보 파싱 오류: {str(e)}",
-            "risk_reason": f"JSON 파싱 오류: {str(e)}"
-        }
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return {
-            "status": "error",
-            "product_name": "분석 실패",
-            "risk_level": "yellow",
-            "risk_score": 50,
-            "analysis": {
-                "detected_ingredients": [],
-                "allergen_warnings": [],
-                "diet_warnings": [],
-                "nutrition": {}
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": f"OCR 처리 중 오류가 발생했습니다: {str(e)}",
+                "product_name": product_name or "분석 실패",
+                "ocr_result": {"nutrition": {}, "materials": []},
+                "raw_ocr": {"nutrition": {}, "materials": []}
+            }
+        )
+
+
+# ============================================
+# API 2: RAG + LLM 분석 API
+# ============================================
+
+# 인증 함수 추가
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    if credentials.credentials != API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    return credentials.credentials
+
+
+# ============================================
+# 내부용 RAG 분석 함수 (API 인증 불필요, DB는 자동 사용)
+# ============================================
+
+async def _internal_rag_analyze(
+    product_name: str,
+    ocr_result: OCRResult,
+    user_data: dict
+) -> dict:
+    """
+    내부 호출용 RAG 분석 함수
+    - API 인증: 불필요 (내부 함수)
+    - DB 연결: 서버 시작 시 이미 연결됨 (rag_service, gpt_service 사용)
+    """
+    diet_type = user_data.get("diet_type", "none")
+    allergies = user_data.get("allergies", [])
+    user_id = user_data.get("user_id", "anonymous")
+
+    detected_allergens = ocr_result.materials
+    nutrition_data = ocr_result.nutrition
+
+    allergen_warnings = check_allergen_match(detected_allergens, allergies)
+    diet_warnings = check_diet_warnings(detected_allergens, diet_type)
+
+    rag_analysis = None
+    
+    # DB 연결은 이미 되어 있음 (rag_service, gpt_service는 전역 변수)
+    if RAG_AVAILABLE and rag_service and gpt_service:
+        try:
+            logger.info("🔍 RAG + GPT 분석 시작 (DB 연결 활용)...")
+            
+            nutritional_info = NutritionalInfo(
+                calories=nutrition_data.get("calories"),
+                carbohydrates=nutrition_data.get("carbs"),
+                protein=nutrition_data.get("protein"),
+                fat=nutrition_data.get("fat"),
+                sodium=nutrition_data.get("sodium"),
+                sugar=nutrition_data.get("sugar"),
+                cholesterol=nutrition_data.get("cholesterol"),
+                saturated_fat=nutrition_data.get("saturated_fat"),
+                trans_fat=nutrition_data.get("trans_fat"),
+            ) if nutrition_data else None
+            
+            product_data = ProductData(
+                product_name=product_name,
+                nutritional_info=nutritional_info,
+                ingredients=detected_allergens,
+                allergens=detected_allergens
+            )
+            
+            user_profile = UserProfile(
+                height=user_data.get("height"),
+                weight=user_data.get("weight"),
+                age_range=user_data.get("age_range", "20대"),
+                gender=user_data.get("gender"),
+                allergies=allergies,
+                diseases=user_data.get("diseases", []),
+                special_conditions=user_data.get("special_conditions", [])
+            )
+            
+            rag_request = RAGAnalysisRequest(
+                user_id=user_id,
+                product_data=product_data,
+                user_profile=user_profile
+            )
+            
+            # DB에서 규칙 조회 (rag_service가 DB 연결을 관리)
+            rules = await rag_service.get_matching_rules(
+                user_allergies=user_profile.allergies,
+                user_diseases=user_profile.diseases
+            )
+            
+            nutritional_dict = {}
+            if product_data.nutritional_info:
+                info = product_data.nutritional_info
+                nutritional_dict = {
+                    "calories": info.calories,
+                    "carbohydrates": info.carbohydrates,
+                    "protein": info.protein,
+                    "fat": info.fat,
+                    "sodium": info.sodium,
+                    "sugar": info.sugar,
+                    "cholesterol": info.cholesterol,
+                    "saturated_fat": info.saturated_fat,
+                    "trans_fat": info.trans_fat
+                }
+            
+            rule_result = await rag_service.apply_rules(
+                rules=rules,
+                product_allergens=product_data.allergens or [],
+                nutritional_info=nutritional_dict
+            )
+            
+            # DB에서 컨텍스트 검색 (pgvector)
+            context = await rag_service.get_context_for_analysis(
+                allergies=user_profile.allergies,
+                diseases=user_profile.diseases,
+                product_allergens=product_data.allergens or []
+            )
+            
+            # GPT 분석 (OpenAI API 호출)
+            rag_analysis = await gpt_service.analyze(rag_request, context, rule_result)
+            logger.info(f"✅ RAG 분석 완료 - suitability: {rag_analysis.suitability}, score: {rag_analysis.score}")
+            
+        except Exception as e:
+            logger.error(f"⚠️ RAG 분석 실패: {e}")
+            import traceback
+            traceback.print_exc()
+
+    # 응답 구성
+    if rag_analysis:
+        suitability_to_level = {"danger": "red", "warning": "yellow", "safe": "green"}
+        risk_level = suitability_to_level.get(rag_analysis.suitability, "yellow")
+        risk_score = rag_analysis.score
+        recommendation = rag_analysis.nutritional_advice
+        risk_reason = "; ".join(rag_analysis.recommendations) if rag_analysis.recommendations else "분석 완료"
+        alternatives = [
+            {"product_name": alt.product_name, "reason": alt.reason}
+            for alt in rag_analysis.alternatives
+        ] if rag_analysis.alternatives else []
+    else:
+        if len(allergen_warnings) > 0:
+            risk_level = "red"
+            risk_score = 90
+            risk_reason = f"알레르기 성분 감지: {', '.join([w['detected'] for w in allergen_warnings])}"
+            recommendation = f"⚠️ 주의! {', '.join(allergies)} 알레르기 성분이 포함되어 있습니다."
+        elif len(diet_warnings) > 0:
+            risk_level = "yellow"
+            risk_score = 50
+            risk_reason = f"식단 주의: {', '.join([w['reason'] for w in diet_warnings])}"
+            recommendation = "식단 타입에 맞지 않는 성분이 포함되어 있습니다."
+        else:
+            risk_level = "green"
+            risk_score = 10
+            risk_reason = "알레르기 및 식단 위험 요소 없음"
+            recommendation = "✅ 안전합니다."
+        alternatives = []
+
+    return {
+        "status": "success",
+        "product_name": product_name,
+        "risk_level": risk_level,
+        "risk_score": risk_score,
+        "analysis": {
+            "detected_ingredients": detected_allergens,
+            "allergen_warnings": allergen_warnings,
+            "diet_warnings": diet_warnings,
+            "nutrition": nutrition_data,
+            "alternatives": alternatives
+        },
+        "recommendation": recommendation,
+        "risk_reason": risk_reason,
+        "rag_enabled": rag_analysis is not None
+    }
+
+
+# ============================================
+# API 2: RAG + LLM 분석 API (외부용 - 인증 필요)
+# ============================================
+
+@app.post("/api/v1/rag/analyze", tags=["RAG + LLM"])
+async def rag_analyze(
+    request: RAGAnalysisRequestBody,
+    token: str = Depends(verify_token)
+):
+    """
+    ## 외부 호출용 RAG API (Bearer 토큰 인증 필요)
+    """
+    return await _internal_rag_analyze(
+        product_name=request.product_name,
+        ocr_result=request.ocr_result,
+        user_data=request.user_info
+    )
+
+
+# ============================================
+# 통합 API: /api/upload (Node.js 연동용)
+# ============================================
+
+@app.post("/api/upload", tags=["Upload"])
+async def upload_image(
+    file: UploadFile = File(...),
+    user_info: str = Form(...)
+):
+    try:
+        user_data = json.loads(user_info)
+        
+        # 파일명 디코딩 수정
+        filename = file.filename
+        if filename:
+            # URL 인코딩된 파일명 디코딩
+            from urllib.parse import unquote
+            filename = unquote(filename)
+            product_name = filename.rsplit('.', 1)[0]
+        else:
+            product_name = "제품명 미확인"
+        
+        logger.info(f"📤 업로드 요청: {product_name}")
+        logger.info(f"👤 사용자 정보: {json.dumps(user_data, ensure_ascii=False, indent=2)}")
+        
+        # ============================================
+        # 1. YOLO + OCR 실행
+        # ============================================
+        image_bytes = await file.read()
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if image is None:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "status": "error",
+                    "product_name": "이미지 오류",
+                    "risk_level": "yellow",
+                    "risk_score": 50,
+                    "analysis": {"detected_ingredients": [], "allergen_warnings": [], "diet_warnings": [], "nutrition": {}},
+                    "recommendation": "이미지를 읽을 수 없습니다.",
+                    "risk_reason": "이미지 디코딩 실패",
+                    "raw_ocr": {"nutrition": {}, "materials": []}
+                }
+            )
+
+        logger.info(f"📷 YOLO + OCR 처리 시작: {product_name}")
+        nutrition_result, material_result = ocr_model.execute(image)
+        
+        # ============================================
+        # OCR 결과 터미널 출력
+        # ============================================
+        print("\n" + "="*60)
+        print("🔍 YOLO + OCR 결과")
+        print("="*60)
+        print(f"📦 제품명: {product_name}")
+        print("-"*60)
+        print("📊 영양성분 (raw):")
+        if nutrition_result:
+            for key, value in nutrition_result.items():
+                print(f"   • {key}: {value}")
+        else:
+            print("   (감지된 영양성분 없음)")
+        print("-"*60)
+        print("🥗 원재료:")
+        if material_result:
+            for i, material in enumerate(material_result, 1):
+                print(f"   {i}. {material}")
+        else:
+            print("   (감지된 원재료 없음)")
+        print("="*60 + "\n")
+        
+        logger.info(f"✅ OCR 완료 - 영양성분: {len(nutrition_result) if nutrition_result else 0}개, 원재료: {len(material_result) if material_result else 0}개")
+        
+        # 영양성분 파싱
+        nutrition_data = {}
+        if nutrition_result:
+            nutrition_mapping = {
+                "kcal": "calories", "탄수화물": "carbs", "단백질": "protein",
+                "지방": "fat", "나트륨": "sodium", "당류": "sugar",
+                "포화지방": "saturated_fat", "트랜스지방": "trans_fat",
+                "콜레스테롤": "cholesterol", "총내용량": "total_content",
+                "기준내용량": "serving_size"
+            }
+            for korean_key, english_key in nutrition_mapping.items():
+                if korean_key in nutrition_result:
+                    nutrition_data[english_key] = str(nutrition_result[korean_key][0])
+
+        detected_materials = material_result if material_result else []
+        
+        # ============================================
+        # 2. RAG API 호출 (HTTP 요청 + Bearer 토큰 인증)
+        # ============================================
+        RAG_API_URL = os.getenv("RAG_API_URL", "https://d9d8d8c533d8.ngrok-free.app")
+        
+        # RAG API가 기대하는 형식으로 변환
+        rag_request_data = {
+            "userId": user_data.get("user_id", "anonymous"),
+            "productData": {
+                "productName": product_name,
+                "nutritionalInfo": {
+                    "calories": nutrition_data.get("calories"),
+                    "carbohydrates": nutrition_data.get("carbs"),
+                    "protein": nutrition_data.get("protein"),
+                    "fat": nutrition_data.get("fat"),
+                    "sodium": nutrition_data.get("sodium"),
+                    "sugar": nutrition_data.get("sugar"),
+                    "cholesterol": nutrition_data.get("cholesterol"),
+                    "saturatedFat": nutrition_data.get("saturated_fat"),
+                    "transFat": nutrition_data.get("trans_fat")
+                },
+                "ingredients": detected_materials,
+                "allergens": detected_materials
             },
-            "recommendation": f"OCR 처리 중 오류가 발생했습니다: {str(e)}",
-            "risk_reason": f"처리 오류: {str(e)}"
+            "userProfile": {
+                "height": user_data.get("height"),
+                "weight": user_data.get("weight"),
+                "ageRange": user_data.get("age_range", "20대"),
+                "gender": user_data.get("gender"),
+                "allergies": user_data.get("allergies", []),
+                "diseases": user_data.get("diseases", []),
+                "specialConditions": user_data.get("special_conditions", [])
+            }
         }
+        
+        print("\n" + "="*60)
+        print("🤖 RAG API 요청")
+        print("="*60)
+        print(f"🌐 URL: {RAG_API_URL}/api/v1/rag/analyze")
+        print(f"📨 요청 데이터:")
+        print(json.dumps(rag_request_data, ensure_ascii=False, indent=2))
+        print("="*60 + "\n")
+        
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                logger.info(f"🔍 RAG API 호출: {RAG_API_URL}/api/v1/rag/analyze")
+                
+                rag_response = await client.post(
+                    f"{RAG_API_URL}/api/v1/rag/analyze",
+                    json=rag_request_data,
+                    headers={"Authorization": f"Bearer {API_KEY}"}
+                )
+                
+                # ============================================
+                # RAG 결과 터미널 출력
+                # ============================================
+                print("\n" + "="*60)
+                print("🎯 RAG API 응답")
+                print("="*60)
+                print(f"📡 상태 코드: {rag_response.status_code}")
+                
+                if rag_response.status_code == 200:
+                    rag_data = rag_response.json()
+                    
+                    # RAG 응답 키 확인 및 매핑
+                    analyze_result = {
+                        "status": "success",
+                        "product_name": product_name,
+                        "risk_level": rag_data.get("risk_level") or rag_data.get("riskLevel") or "green",
+                        "risk_score": rag_data.get("risk_score") or rag_data.get("riskScore") or 0,
+                        "risk_reason": rag_data.get("risk_reason") or rag_data.get("riskReason") or "",
+                        "recommendation": rag_data.get("recommendation") or "",
+                        "rag_enabled": rag_data.get("rag_enabled", True),
+                        "analysis": rag_data.get("analysis", {
+                            "detected_ingredients": detected_materials,
+                            "allergen_warnings": [],
+                            "diet_warnings": [],
+                            "nutrition": nutrition_data,
+                            "alternatives": []
+                        })
+                    }
+                    
+                    # risk_level 유효성 검사
+                    if analyze_result["risk_level"] not in ["red", "yellow", "green"]:
+                        analyze_result["risk_level"] = "green"
+                    
+                    print(f"✅ 분석 성공!")
+
+                else:
+                    print(f"❌ RAG API 오류!")
+                    print(f"📄 응답 내용: {rag_response.text}")
+                    print("="*60 + "\n")
+                    logger.error(f"❌ RAG API 오류: {rag_response.status_code}")
+                    # RAG 실패 시 규칙 기반 폴백
+                    analyze_result = await _fallback_analyze(
+                        product_name, nutrition_data, detected_materials, user_data
+                    )
+                    _print_fallback_result(analyze_result)
+                    
+        except Exception as e:
+            print("\n" + "="*60)
+            print("⚠️ RAG API 호출 실패")
+            print("="*60)
+            print(f"❌ 오류: {str(e)}")
+            print("🔄 규칙 기반 폴백 분석 실행...")
+            print("="*60 + "\n")
+            
+            logger.error(f"⚠️ RAG API 호출 실패: {e}")
+            # RAG 실패 시 규칙 기반 폴백
+            analyze_result = await _fallback_analyze(
+                product_name, nutrition_data, detected_materials, user_data
+            )
+            _print_fallback_result(analyze_result)
+        
+        # raw_ocr 추가
+        analyze_result["raw_ocr"] = {
+            "nutrition": {k: v[0] for k, v in nutrition_result.items()} if nutrition_result else {},
+            "materials": detected_materials
+        }
+        
+        # ============================================
+        # 최종 결과 요약 출력
+        # ============================================
+        print("\n" + "="*60)
+        print("📊 최종 분석 결과 요약")
+        print("="*60)
+        print(f"📦 제품명: {analyze_result.get('product_name', product_name)}")
+        print(f"🚦 위험도: {analyze_result.get('risk_level', 'N/A')} (점수: {analyze_result.get('risk_score', 'N/A')})")
+        print(f"🤖 RAG 사용: {'예' if analyze_result.get('rag_enabled') else '아니오 (규칙 기반)'}")
+        print(f"💡 권장사항: {analyze_result.get('recommendation', 'N/A')}")
+        print("="*60 + "\n")
+        
+        # 안전하게 접근
+        logger.info(f"📊 분석 완료: {product_name} → {analyze_result.get('risk_level', 'unknown')}")
+        
+        return analyze_result
+
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ JSON 파싱 오류: {e}")
+        return JSONResponse(
+            status_code=400,
+            content={
+                "status": "error",
+                "product_name": "분석 실패",
+                "risk_level": "yellow",
+                "risk_score": 50,
+                "analysis": {"detected_ingredients": [], "allergen_warnings": [], "diet_warnings": [], "nutrition": {}},
+                "recommendation": f"사용자 정보 파싱 오류: {str(e)}",
+                "risk_reason": f"JSON 파싱 오류: {str(e)}",
+                "raw_ocr": {"nutrition": {}, "materials": []}
+            }
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        logger.error(f"❌ 처리 오류: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "product_name": "분석 실패",
+                "risk_level": "yellow",
+                "risk_score": 50,
+                "analysis": {"detected_ingredients": [], "allergen_warnings": [], "diet_warnings": [], "nutrition": {}},
+                "recommendation": f"처리 중 오류: {str(e)}",
+                "risk_reason": f"처리 오류: {str(e)}",
+                "raw_ocr": {"nutrition": {}, "materials": []}
+            }
+        )
+
+
+def _print_fallback_result(result: dict):
+    """폴백 분석 결과 출력"""
+    print("\n" + "="*60)
+    print("🔄 규칙 기반 폴백 분석 결과")
+    print("="*60)
+    print(f"🚦 위험도: {result.get('risk_level', 'N/A')}")
+    print(f"📊 위험 점수: {result.get('risk_score', 'N/A')}")
+    print(f"📝 위험 사유: {result.get('risk_reason', 'N/A')}")
+    print(f"💡 권장사항: {result.get('recommendation', 'N/A')}")
+    
+    if result.get('analysis', {}).get('allergen_warnings'):
+        print("-"*60)
+        print("⚠️ 알레르기 경고:")
+        for warning in result['analysis']['allergen_warnings']:
+            print(f"   • {warning.get('message', warning)}")
+    
+    if result.get('analysis', {}).get('diet_warnings'):
+        print("-"*60)
+        print("🥗 식단 경고:")
+        for warning in result['analysis']['diet_warnings']:
+            print(f"   • {warning.get('reason', warning)}")
+    
+    print("="*60 + "\n")
+
+
+async def _fallback_analyze(
+    product_name: str,
+    nutrition_data: dict,
+    detected_materials: list,
+    user_data: dict
+) -> dict:
+    """RAG API 실패 시 규칙 기반 폴백 분석"""
+    allergies = user_data.get("allergies", [])
+    diet_type = user_data.get("diet_type", "none")
+    
+    allergen_warnings = check_allergen_match(detected_materials, allergies)
+    diet_warnings = check_diet_warnings(detected_materials, diet_type)
+    
+    if len(allergen_warnings) > 0:
+        risk_level = "red"
+        risk_score = 90
+        risk_reason = f"알레르기 성분 감지: {', '.join([w['detected'] for w in allergen_warnings])}"
+        recommendation = f"⚠️ 주의! {', '.join(allergies)} 알레르기 성분이 포함되어 있습니다."
+    elif len(diet_warnings) > 0:
+        risk_level = "yellow"
+        risk_score = 50
+        risk_reason = f"식단 주의: {', '.join([w['reason'] for w in diet_warnings])}"
+        recommendation = "식단 타입에 맞지 않는 성분이 포함되어 있습니다."
+    else:
+        risk_level = "green"
+        risk_score = 10
+        risk_reason = "알레르기 및 식단 위험 요소 없음"
+        recommendation = "✅ 안전합니다."
+    
+    return {
+        "status": "success",
+        "product_name": product_name,
+        "risk_level": risk_level,
+        "risk_score": risk_score,
+        "analysis": {
+            "detected_ingredients": detected_materials,
+            "allergen_warnings": allergen_warnings,
+            "diet_warnings": diet_warnings,
+            "nutrition": nutrition_data,
+            "alternatives": []
+        },
+        "recommendation": recommendation,
+        "risk_reason": risk_reason,
+        "rag_enabled": False
+    }
 
 
 if __name__ == "__main__":
     import uvicorn
+    import sys
+    import io
+    
+    # Windows 콘솔 인코딩 설정
+    if sys.platform == "win32":
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    
     uvicorn.run(app, host="0.0.0.0", port=8000)

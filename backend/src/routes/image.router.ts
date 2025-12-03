@@ -1,19 +1,19 @@
 import { Router } from "express";
-import ImageController from "../controllers/image.controller";
+import multer from "multer";
 import { authMiddleware } from "../middlewares/auth.middleware";
-import { upload } from "../middlewares/upload.middleware";
+import ImageController from "../controllers/image.controller";
 
-const imageRouter = Router();
+const router = Router();
 
-// 이미지 업로드 (인증 필요, FastAPI로 전달)
-imageRouter.post(
-    "/upload",
-    authMiddleware,
-    upload.single("image"),  // "image" 필드로 단일 파일 업로드
-    ImageController.uploadImage
-);
+// multer 설정 (메모리 저장)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB
+  },
+});
 
-// FastAPI 서버 헬스 체크
-imageRouter.get("/health", ImageController.checkFastAPIHealth);
+// 이미지 업로드 (multipart/form-data)
+router.post("/upload", authMiddleware, upload.single("image"), ImageController.uploadImage);
 
-export default imageRouter;
+export default router;
