@@ -83,6 +83,17 @@ export default function HealthSettings() {
   return (
     <div className="settings-page">
       <div className="settings-container">
+        <div className="progress-bar-wrapper">
+          <div className="progress-bar-track">
+            <div className="progress-bar-fill" style={{ width: '33%' }}></div>
+          </div>
+          <div className="progress-steps">
+            <span className="progress-step-label active">신체 정보</span>
+            <span className="progress-step-label">건강 상태</span>
+            <span className="progress-step-label">식단 설정</span>
+          </div>
+        </div>
+
         <div className="settings-header">
           <h1>신체 정보 설정</h1>
           <p>맞춤형 분석을 위해 신체 정보를 입력해주세요.</p>

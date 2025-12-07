@@ -3,6 +3,38 @@
   min-height: 100vh;
   background: #f8f9fa;
   padding: 40px 20px;
+  position: relative;
+}
+
+/* Back Edge Button */
+.back-edge-button {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 30px 12px;
+  background: #4A90E2;
+  color: white;
+  border: none;
+  border-radius: 0 12px 12px 0;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 100;
+  box-shadow: 3px 0 12px rgba(0, 0, 0, 0.2);
+  letter-spacing: -2px;
+}
+
+.back-edge-button:hover {
+  background: #357ABD;
+  padding-right: 16px;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.back-edge-button:active {
+  background: #2868A8;
+  transform: translateY(-50%) scale(0.98);
 }
 
 .settings-container {
@@ -213,7 +245,7 @@
 
 .form-group input[type="number"]:focus {
   outline: none;
-  border-color: #4CAF50;
+  border-color: #64B5F6;
 }
 
 /* Option Grid */
@@ -234,7 +266,7 @@
 }
 
 .option-item:hover {
-  border-color: #4CAF50;
+  border-color: #64B5F6;
 }
 
 .option-item input[type="radio"] {
@@ -242,20 +274,65 @@
 }
 
 .option-item input[type="radio"]:checked + span {
-  color: #4CAF50;
+  color: #64B5F6;
   font-weight: 600;
 }
 
 .option-item input[type="radio"]:checked ~ span {
-  color: #4CAF50;
+  color: #64B5F6;
 }
 
 .option-item:has(input:checked) {
-  border-color: #4CAF50;
-  background-color: #f1f8e9;
+  border-color: #64B5F6;
+  background-color: #e3f2fd;
 }
 
-/* Progress Indicator */
+/* Progress Bar */
+.progress-bar-wrapper {
+  margin-bottom: 32px;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 6px;
+  background-color: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4A90E2 0%, #64B5F6 100%);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #666;
+}
+
+.progress-step-label {
+  flex: 1;
+  text-align: center;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.progress-step-label.completed {
+  color: #4A90E2;
+  font-weight: 600;
+}
+
+.progress-step-label.active {
+  color: #4A90E2;
+  font-weight: 700;
+}
+
+/* Progress Indicator (dots) */
 .progress-indicator {
   display: flex;
   justify-content: center;
@@ -271,7 +348,7 @@
 }
 
 .progress-dot.active {
-  background-color: #4CAF50;
+  background-color: #64B5F6;
 }
 
 /* Actions */
@@ -301,7 +378,7 @@
 .btn-save {
   flex: 2;
   padding: 14px 24px;
-  background-color: #4CAF50;
+  background-color: #64B5F6;
   color: white;
   border: none;
   border-radius: 8px;
@@ -312,7 +389,7 @@
 }
 
 .btn-save:hover:not(:disabled) {
-  background-color: #45a049;
+  background-color: #42A5F5;
 }
 
 .btn-save:disabled {

@@ -1,43 +1,21 @@
 # FastAPI and Server
 fastapi>=0.100.0
-uvicorn>=0.20.0
+uvicorn[standard]>=0.20.0
 python-multipart>=0.0.6
-python-dotenv>=1.0.0
 
 # YOLO + OCR
 ultralytics>=8.0.0
 easyocr>=1.7.0
 opencv-python>=4.8.0
-opencv-python-headless>=4.8.0
 pillow>=10.0.0
 
-# Deep Learning
+# Deep Learning (PyTorch - required by ultralytics and easyocr)
 torch>=2.0.0
 torchvision>=0.15.0
 
-# Database
-asyncpg>=0.27.0
-SQLAlchemy>=2.0.0
-pgvector>=0.2.0
-
-# OpenAI + LangChain (RAG)
-openai>=1.0.0
-langchain>=0.1.0
-langchain-core>=0.1.0
-langchain-openai>=0.0.5
-tiktoken>=0.5.0
-
-# Pydantic
-pydantic>=2.0.0
-pydantic-settings>=2.0.0
-
 # HTTP Client
-httpx>=0.24.0
 requests>=2.31.0
 
 # Utils
 numpy>=1.24.0
-scipy>=1.10.0
 matplotlib>=3.7.0
-tqdm>=4.65.0
-PyYAML>=6.0

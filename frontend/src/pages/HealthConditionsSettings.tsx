@@ -121,7 +121,25 @@ export default function HealthConditionsSettings() {
 
   return (
     <div className="settings-page">
+      <button
+        className="back-edge-button"
+        onClick={() => navigate('/health-settings')}
+        aria-label="이전 페이지로"
+      >
+        &lt;&lt;&lt;
+      </button>
       <div className="settings-container">
+        <div className="progress-bar-wrapper">
+          <div className="progress-bar-track">
+            <div className="progress-bar-fill" style={{ width: '66%' }}></div>
+          </div>
+          <div className="progress-steps">
+            <span className="progress-step-label completed">신체 정보</span>
+            <span className="progress-step-label active">건강 상태</span>
+            <span className="progress-step-label">식단 설정</span>
+          </div>
+        </div>
+
         <div className="settings-header">
           <h1>건강 상태 설정</h1>
           <p>해당되는 질병이나 특수 상태를 선택해주세요.</p>
@@ -166,12 +184,6 @@ export default function HealthConditionsSettings() {
         </div>
 
         <div className="settings-actions">
-          <button
-            onClick={() => navigate('/health-settings')}
-            className="btn-back"
-          >
-            이전
-          </button>
           <button
             onClick={handleNext}
             disabled={saving}

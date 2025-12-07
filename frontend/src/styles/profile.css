@@ -277,9 +277,9 @@
 }
 
 .chip.selected {
-  background: #4CAF50;
+  background: #64B5F6;
   color: #fff;
-  border-color: #4CAF50;
+  border-color: #64B5F6;
 }
 
 .chip.disease.selected {

@@ -12,7 +12,7 @@ export default function Header({ onLogout, userName, onLogin, onSignup, onProfil
   return (
     <header className="header">
       <div className="header-container">
-        <div className="logo">찍먹 Go</div>
+        <div className="logo">찍먹 Go?</div>
 
         <nav className="nav">
           <a href="/" className="nav-link">Home</a>

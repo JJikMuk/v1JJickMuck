@@ -91,7 +91,25 @@ export default function Settings() {
 
   return (
     <div className="settings-page">
+      <button
+        className="back-edge-button"
+        onClick={() => navigate('/health-conditions')}
+        aria-label="이전 페이지로"
+      >
+        &lt;&lt;&lt;
+      </button>
       <div className="settings-container">
+        <div className="progress-bar-wrapper">
+          <div className="progress-bar-track">
+            <div className="progress-bar-fill" style={{ width: '100%' }}></div>
+          </div>
+          <div className="progress-steps">
+            <span className="progress-step-label completed">신체 정보</span>
+            <span className="progress-step-label completed">건강 상태</span>
+            <span className="progress-step-label active">식단 설정</span>
+          </div>
+        </div>
+
         <div className="settings-header">
           <h1>알레르기 및 식단 설정</h1>
           <p>안전한 식사를 위해 알레르기와 식단 타입을 설정해주세요.</p>
@@ -134,14 +152,7 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* 버튼들을 settings-actions 안에 함께 배치 */}
         <div className="settings-actions">
-          <button
-            onClick={() => navigate('/health-settings')}
-            className="btn-back"
-          >
-            이전
-          </button>
           <button
             onClick={handleSave}
             disabled={saving}
