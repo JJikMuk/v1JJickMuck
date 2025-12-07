@@ -9,6 +9,11 @@
 - **영양 정보 분석**: 개인의 건강 정보(키, 몸무게, 연령, 성별)를 기반으로 한 영양 섭취 분석
 - **실시간 이미지 업로드**: 식품 사진을 촬영하거나 업로드하여 즉시 분석
 
+## main.py : Yolo+OCR+RAG 실행시키는 코드
+## nutrition_yolo, material_yolo : 검출용 코드
+## NutritionImageToText : 추론 코드 및 보조 함수
+## requirements.txt : 사용된 패키지 버전
+ 
 ## 기술 스택
 
 ### Backend (FastAPI)
