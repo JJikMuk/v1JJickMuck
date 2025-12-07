@@ -1,0 +1,1 @@
+from MaterialAndNutritionOCR.MaterialAndNutritionImageToText import MaterialAndNutritionImageToText
